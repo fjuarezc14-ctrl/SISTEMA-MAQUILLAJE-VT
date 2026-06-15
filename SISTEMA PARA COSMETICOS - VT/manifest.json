@@ -1,0 +1,17 @@
+{
+  "name": "GlowManager Pro - VALETEC",
+  "short_name": "GlowManager",
+  "description": "Sistema de gestión y ventas para el rubro de belleza",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fdf2f8",
+  "theme_color": "#ec4899",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1986/1986305.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
