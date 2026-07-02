@@ -8,7 +8,8 @@ datasource db {
 
 generator client {
   provider      = "prisma-client-js"
-  // Targets necesarios: "native" para desarrollo local, alpine para Docker
+  // "native" para desarrollo local (Windows)
+  // "linux-musl-openssl-3.0.x" para Alpine Linux (Docker)
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
