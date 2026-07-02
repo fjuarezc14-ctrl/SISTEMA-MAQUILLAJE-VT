@@ -1,0 +1,145 @@
+// backend/prisma/schema.prisma — GlowManager Pro
+// Modelos basados en la maqueta aprobada por el cliente
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  // Targets necesarios: "native" para desarrollo local, alpine para Docker
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+// ─────────────────────────────────────────────
+// AUTENTICACIÓN
+// ─────────────────────────────────────────────
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  nombre    String
+  password  String   // hash bcrypt
+  rol       String   @default("ADMIN") // ADMIN | VENDEDOR
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// INVENTARIO — Productos y Lotes
+// ─────────────────────────────────────────────
+
+model Producto {
+  id          Int         @id @default(autoincrement())
+  codigo      String      @unique
+  nombre      String
+  categoria   String      // texto libre, categorías se derivan con DISTINCT
+  precio      Decimal     @db.Decimal(10, 2) // precio de venta en S/
+  vencimiento String?     // formato "dd/mm/yyyy", null si no aplica
+  activo      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  lotes       Lote[]
+  itemsVenta  ItemVenta[]
+}
+
+// Cada lote representa una compra de mercadería.
+// Un producto puede tener múltiples lotes con distintos costos.
+model Lote {
+  id           Int      @id @default(autoincrement())
+  productoId   Int
+  producto     Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  costo        Decimal  @db.Decimal(10, 2) // precio de compra por unidad en S/
+  stockInicial Int      // unidades al ingresar el lote (para cálculo de inversión)
+  stockActual  Int      // unidades disponibles actualmente
+  createdAt    DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// CRM — Clientes
+// ─────────────────────────────────────────────
+
+model Cliente {
+  id              Int          @id @default(autoincrement())
+  dni             String       @unique
+  nombre          String
+  telefono        String?
+  correo          String?
+  totalComprado   Decimal      @default(0) @db.Decimal(10, 2)
+  puntosFidelidad Int          @default(0) // 1 punto por cada S/ 100 de compra
+  activo          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  ventas          Venta[]
+  citas           Cita[]
+}
+
+// ─────────────────────────────────────────────
+// POS — Ventas e Items de Venta
+// ─────────────────────────────────────────────
+
+model Venta {
+  id            Int         @id @default(autoincrement())
+  fecha         DateTime    @default(now())
+  clienteNombre String      // siempre presente ("Cliente Anónimo" si no registrado)
+  clienteId     Int?        // opcional: link al cliente registrado en CRM
+  cliente       Cliente?    @relation(fields: [clienteId], references: [id])
+  metodoPago    String      // "Efectivo" | "Yape" | "Plin" | "Transferencia"
+  total         Decimal     @db.Decimal(10, 2)
+  puntos        Int         @default(0)
+  llevaBolsa    Boolean     @default(false)
+
+  items         ItemVenta[]
+}
+
+// Líneas del ticket de venta
+model ItemVenta {
+  id             Int      @id @default(autoincrement())
+  ventaId        Int
+  venta          Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  productoId     Int
+  producto       Producto @relation(fields: [productoId], references: [id])
+  nombreProducto String   // copia del nombre en el momento de la venta
+  cantidad       Int
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  costoUnitario  Decimal  @db.Decimal(10, 2) // para cálculo de ganancia neta por lote
+}
+
+// ─────────────────────────────────────────────
+// AGENDA — Citas
+// ─────────────────────────────────────────────
+
+model Cita {
+  id            Int      @id @default(autoincrement())
+  fecha         DateTime
+  clienteNombre String
+  clienteId     Int?     // opcional: link al cliente registrado
+  cliente       Cliente? @relation(fields: [clienteId], references: [id])
+  servicio      String
+  estado        String   @default("Pendiente") // "Pendiente" | "Completado" | "Cancelado"
+  notas         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// GASTOS INTERNOS — Consumibles e Insumos
+// ─────────────────────────────────────────────
+
+model GastoInterno {
+  id              Int       @id @default(autoincrement())
+  categoria       String    // "Publicidad" | "Productos de Limpieza" | "Cortesías al Cliente" | "Otros Gastos"
+  item            String
+  cantidadInicial Int
+  cantidadActual  Int
+  costoTotal      Decimal   @db.Decimal(10, 2)
+  fechaIngreso    DateTime  @default(now())
+  fechaFin        DateTime?
+  diasDuracion    Int?      // calculado al agotar el stock
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
