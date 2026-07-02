@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yuna DEMO - VALETEC</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-pink-50/50 font-sans text-gray-800">
+
+    <div class="flex h-screen overflow-hidden relative">
+        
+        <!-- OVERLAY PARA MÓVILES -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity md:hidden"></div>
+
+        <!-- BARRA LATERAL -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-pink-100 flex flex-col justify-between shadow-sm shrink-0 absolute inset-y-0 left-0 z-50 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-pink-500 text-white p-2 rounded-xl shadow-md shadow-pink-200">
+                            <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-wide text-gray-900">Yuna <span class="text-pink-500">DEMO</span></span>
+                    </div>
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-rose-500">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+                
+                <nav class="space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-pink-500 text-white font-medium transition-all cursor-pointer">
+                        <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('pos')" id="btn-pos" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 font-medium transition-all cursor-pointer">
+                        <i class="fa-solid fa-cash-register w-5"></i> Punto de Venta (POS)
+                    </button>
+                    <button onclick="switchTab('clientes')" id="btn-clientes" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 font-medium transition-all cursor-pointer">
+                        <i class="fa-solid fa-users w-5"></i> CRM Clientes
+                    </button>
+                    <button onclick="switchTab('inventario')" id="btn-inventario" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 font-medium transition-all cursor-pointer">
+                        <i class="fa-solid fa-boxes-stacked w-5"></i> Inventario / Stock
+                    </button>
+                    <button onclick="switchTab('gastos')" id="btn-gastos" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 font-medium transition-all cursor-pointer">
+                        <i class="fa-solid fa-file-invoice-dollar w-5"></i> Gastos Internos
+                    </button>
+                    <button onclick="switchTab('citas')" id="btn-citas" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 font-medium transition-all cursor-pointer">
+                        <i class="fa-regular fa-calendar-check w-5"></i> Agenda de Citas
+                    </button>
+                    <button onclick="switchTab('finanzas')" id="btn-finanzas" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-pink-50 hover:text-pink-600 font-medium transition-all cursor-pointer">
+                        <i class="fa-solid fa-wallet w-5"></i> Finanzas
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="p-6 border-t border-pink-50 text-xs text-gray-400 font-medium">
+                <p>VALETEC Software S.A.C.</p>
+                <p class="text-[10px] mt-0.5 text-pink-400">Prototipo Comercial Interactivo</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            
+            <header class="bg-white border-b border-pink-100 px-4 md:px-8 py-4 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-pink-500 focus:outline-none transition-colors">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h1 id="page-title" class="text-xl md:text-2xl font-bold text-gray-900">Resumen del Negocio</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-semibold text-gray-900">Administrador</p>
+                        <p class="text-xs text-gray-400">Glamour Studio</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold border border-pink-200 shrink-0">G</div>
+                </div>
+            </header>
+
+            <div class="p-4 md:p-8 flex-1">
+
+                <!-- DASHBOARD -->
+                <section id="tab-dashboard" class="tab-content space-y-6 md:space-y-8">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ventas Recaudadas</p>
+                                <h3 id="dash-ingresos" class="text-2xl font-black text-gray-900 mt-1">S/ 420.50</h3>
+                            </div>
+                            <div class="bg-emerald-50 text-emerald-500 p-3 rounded-xl text-lg"><i class="fa-solid fa-scale-earned"></i></div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Citas para Hoy</p>
+                                <h3 id="dash-citas-hoy" class="text-2xl font-black text-purple-600 mt-1">0</h3>
+                            </div>
+                            <div class="bg-purple-50 text-purple-500 p-3 rounded-xl text-lg"><i class="fa-regular fa-calendar-check"></i></div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Stock Crítico</p>
+                                <h3 id="dash-stock-alert" class="text-2xl font-black text-rose-500 mt-1">0 Items</h3>
+                            </div>
+                            <div class="bg-rose-50 text-rose-500 p-3 rounded-xl text-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Capital Inventario</p>
+                                <h3 id="dash-capital" class="text-2xl font-black text-pink-600 mt-1">S/ 2,542.00</h3>
+                            </div>
+                            <div class="bg-pink-50 text-pink-500 p-3 rounded-xl text-lg"><i class="fa-solid fa-vault"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg"></i>
+                            <h4 class="text-lg font-bold text-gray-900">Alertas de Vencimiento de Cosméticos</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-rose-50/60 border border-rose-100 rounded-xl flex items-center gap-4">
+                                <div class="bg-rose-500 text-white p-2.5 rounded-lg text-sm shrink-0"><i class="fa-solid fa-calendar-xmark"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-sm text-gray-900 truncate">Fijador Charlotte Tilbury (Lote A)</p>
+                                    <p class="text-xs text-rose-600 font-semibold mt-0.5">¡VENCIDO el 02/05/2026!</p>
+                                </div>
+                                <span class="text-xs bg-rose-200 text-rose-800 px-2 py-0.5 rounded font-bold uppercase tracking-wider hidden sm:block">Retirar</span>
+                            </div>
+                            <div class="p-4 bg-amber-50/60 border border-amber-100 rounded-xl flex items-center gap-4">
+                                <div class="bg-amber-500 text-white p-2.5 rounded-lg text-sm shrink-0"><i class="fa-solid fa-hourglass-half"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-sm text-gray-900 truncate">Paleta Sombras Urban Decay Naked</p>
+                                    <p class="text-xs text-amber-700 font-medium mt-0.5">Próximo a vencer: 15/07/2026</p>
+                                </div>
+                                <span class="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded font-bold uppercase tracking-wider hidden sm:block">33 días</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CONTENEDOR POS -->
+                <section id="tab-pos" class="tab-content hidden">
+                    <div class="flex flex-col lg:grid lg:grid-cols-3 gap-6 md:gap-8">
+                        <div class="lg:col-span-2 flex flex-col h-[50vh] md:h-[450px]">
+                            <div class="flex flex-col sm:flex-row gap-3 mb-4 shrink-0">
+                                <div class="relative flex-1">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
+                                    <input type="text" id="pos-search" onkeyup="updateUI()" placeholder="Buscar producto por nombre o código..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white shadow-sm">
+                                </div>
+                                <button onclick="abrirModalHistorial()" class="w-full sm:w-auto bg-white border border-pink-200 text-pink-600 font-bold px-4 py-2.5 rounded-xl hover:bg-pink-50 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> Historial
+                                </button>
+                            </div>
+                            <div id="pos-catalog" class="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto pr-2 pb-4 flex-1 content-start"></div>
+                        </div>
+                        
+                        <div class="bg-white p-4 md:p-6 rounded-2xl border border-pink-100 shadow-sm flex flex-col justify-between h-[50vh] md:h-[450px]">
+                            <div class="flex-1 flex flex-col min-h-0">
+                                <div class="flex items-center justify-between border-b border-pink-50 pb-3 mb-4 shrink-0">
+                                    <h4 class="font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-receipt text-pink-500"></i> Ticket Actual</h4>
+                                    <button onclick="clearCart()" class="text-xs text-gray-400 hover:text-rose-500 transition-all font-medium cursor-pointer">Vaciar</button>
+                                </div>
+                                <div id="cart-items" class="space-y-3 overflow-y-auto flex-1 pr-1 text-sm">
+                                    <p class="text-center text-gray-400 mt-8">El ticket está vacío</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-pink-50 pt-4 space-y-4 shrink-0 mt-4">
+                                <div class="flex justify-between items-center text-lg font-bold text-gray-900">
+                                    <span>Total a Cobrar:</span>
+                                    <span id="cart-total" class="text-xl text-emerald-600">S/ 0.00</span>
+                                </div>
+                                <button onclick="abrirModalCheckout()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-emerald-100 flex items-center justify-center gap-2 cursor-pointer">
+                                    <i class="fa-solid fa-cash-register"></i> Proceder al Pago
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN DE CLIENTES (CRM INTEGRADO) -->
+                <section id="tab-clientes" class="tab-content hidden space-y-4 md:space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <p class="text-sm text-gray-500 font-medium">Asistente CRM de fidelización rápida por WhatsApp corporativo.</p>
+                        <button onclick="abrirModalCliente()" class="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm shadow-pink-200">
+                            <i class="fa-solid fa-user-plus"></i> Agregar Cliente
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-pink-50/50 text-pink-700 text-xs font-bold uppercase tracking-wider border-b border-pink-100">
+                                    <th class="p-4 pl-6">DNI / Doc</th>
+                                    <th class="p-4">Nombre Completo</th>
+                                    <th class="p-4">Contacto</th>
+                                    <th class="p-4 text-center">Fidelización CRM (WhatsApp)</th>
+                                    <th class="p-4 text-center">Total Comprado</th>
+                                    <th class="p-4 pr-6 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientes-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN DE INVENTARIO -->
+                <section id="tab-inventario" class="tab-content hidden space-y-4 md:space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <p class="text-sm text-gray-500 font-medium">Lista de stock disponible en tienda con desglose por lotes de costo.</p>
+                        <button onclick="abrirModalProducto()" class="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm shadow-pink-200">
+                            <i class="fa-solid fa-plus"></i> Agregar Producto
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-pink-50/50 text-pink-700 text-xs font-bold uppercase tracking-wider border-b border-pink-100">
+                                    <th class="p-4 pl-6">Código</th>
+                                    <th class="p-4">Producto</th>
+                                    <th class="p-4">Categoría</th>
+                                    <th class="p-4">Precios (Compra / Venta)</th>
+                                    <th class="p-4 text-center">Stock Total</th>
+                                    <th class="p-4">Lotes Activos</th>
+                                    <th class="p-4">Estado</th>
+                                    <th class="p-4 pr-6 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: GASTOS INTERNOS -->
+                <section id="tab-gastos" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <p class="text-sm text-gray-500 font-medium">Control de insumos consumibles, publicidad corporativa y atenciones al cliente.</p>
+                        <button onclick="abrirModalGasto()" class="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm shadow-pink-200">
+                            <i class="fa-solid fa-receipt"></i> Registrar Gasto Interno
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-5 rounded-2xl shadow-sm border border-pink-100 flex flex-col justify-between">
+                            <div>
+                                <h5 class="text-xs font-bold uppercase tracking-widest text-pink-100">Bolsas Corporativas en Stock</h5>
+                                <h3 id="gasto-bolsas-stock" class="text-2xl font-black mt-1">0 unidades</h3>
+                            </div>
+                            <p class="text-[11px] text-pink-50/80 mt-3"><i class="fa-solid fa-circle-info"></i> Se descuentan de forma automatizada al marcar el Check en el POS.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-pink-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Inversión Total Bolsas</p>
+                                <h3 id="gasto-bolsas-inversion" class="text-2xl font-black text-gray-900 mt-1">S/ 0.00</h3>
+                            </div>
+                            <div class="bg-amber-50 text-amber-500 p-3 rounded-xl"><i class="fa-solid fa-bag-shopping text-lg"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-pink-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tiempo de Consumo</p>
+                                <h3 id="gasto-bolsas-duracion" class="text-lg font-bold text-pink-600 mt-1">Métricas en Curso</h3>
+                            </div>
+                            <div class="bg-pink-50 text-pink-500 p-3 rounded-xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-pink-50/50 text-pink-700 text-xs font-bold uppercase tracking-wider border-b border-pink-100">
+                                    <th class="p-4 pl-6">Categoría</th>
+                                    <th class="p-4">Item / Descripción</th>
+                                    <th class="p-4 text-center">Cantidad Inicial</th>
+                                    <th class="p-4 text-center">Disponible</th>
+                                    <th class="p-4 text-right">Inversión</th>
+                                    <th class="p-4 text-center">Consumo Diario</th>
+                                    <th class="p-4 pr-6 text-center">Rendimiento / Alertas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gastos-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- AGENDA CITAS -->
+                <section id="tab-citas" class="tab-content hidden space-y-4 md:space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <p class="text-sm text-gray-500 font-medium">Gestión de reservas y servicios programados.</p>
+                        <button onclick="abrirModalCita()" class="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm shadow-pink-200">
+                            <i class="fa-regular fa-calendar-plus"></i> Agendar Cita
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden overflow-x-auto w-full">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-pink-50/50 text-pink-700 text-xs font-bold uppercase tracking-wider border-b border-pink-100">
+                                    <th class="p-4 pl-6">Fecha</th>
+                                    <th class="p-4">Hora</th>
+                                    <th class="p-4">Cliente</th>
+                                    <th class="p-4">Servicio</th>
+                                    <th class="p-4">Estado</th>
+                                    <th class="p-4 pr-6 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="citas-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- FINANZAS -->
+                <section id="tab-finanzas" class="tab-content hidden space-y-6 md:space-y-8">
+                    <p class="text-sm text-gray-500 font-medium">Reporte de rentabilidad y capital del negocio.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm">
+                            <p class="text-xs font-bold text-emerald-600 uppercase tracking-wider">1. Ingresos (Ventas)</p>
+                            <h3 id="fin-ingresos" class="text-3xl font-bold text-gray-900 mt-2">S/ 420.50</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm">
+                            <p class="text-xs font-bold text-rose-500 uppercase tracking-wider">2. Costos y Egresos Totales</p>
+                            <h3 id="fin-egresos" class="text-3xl font-bold text-gray-900 mt-2">S/ 270.00</h3>
+                        </div>
+                        <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+                            <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">3. Ganancia Neta Real</p>
+                            <h3 id="fin-balance" class="text-3xl font-bold text-emerald-600 mt-2">S/ 150.50</h3>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-6 rounded-2xl text-white shadow-md shadow-pink-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h4 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> Valor del Capital Inmovilizado en Inventario</h4>
+                            <p class="text-xs text-pink-100 max-w-xl mt-1">Simula el valor total de su mercadería a precio de venta. Se reduce automáticamente al vender.</p>
+                        </div>
+                        <div class="bg-white/10 px-6 py-4 rounded-xl border border-white/20 text-center w-full md:w-auto shrink-0">
+                            <span class="text-[10px] uppercase font-bold tracking-widest text-pink-100 block">Capital de Stock</span>
+                            <span id="fin-capital" class="text-3xl font-black tracking-tight">S/ 2,542.00</span>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL CHECKOUT -->
+    <div id="modal-checkout" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md p-4 md:p-6 shadow-xl border border-pink-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-pink-50 pb-4 mb-4">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fa-solid fa-cash-register text-emerald-500"></i> Procesar Pago
+                </h3>
+                <button onclick="cerrarModalCheckout()" class="text-gray-400 hover:text-rose-500 cursor-pointer transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="bg-emerald-50 rounded-xl p-4 mb-3 text-center border border-emerald-100">
+                <p class="text-sm text-emerald-700 font-bold uppercase tracking-wider">Monto a Cobrar</p>
+                <p id="checkout-total" class="text-3xl font-black text-emerald-600 mt-1">S/ 0.00</p>
+            </div>
+
+            <div class="bg-pink-50/50 p-3 rounded-xl border border-pink-100 flex items-center justify-between mb-4">
+                <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input type="checkbox" id="co-lleva-bolsa" class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                    <span class="text-xs font-bold text-gray-700 uppercase tracking-tight">¿Lleva bolsa de regalo? (Gratis)</span>
+                </label>
+                <span id="co-bolsa-stock" class="text-xs font-mono font-bold text-gray-400 bg-white px-2 py-0.5 rounded border border-pink-100">Stock: 0</span>
+            </div>
+
+            <form onsubmit="confirmarPago(event)" class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">1. Datos del Cliente</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">DNI / Documento</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="co-dni" placeholder="Ej. 76543210" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white">
+                                <button type="button" onclick="buscarClienteDNI()" class="bg-pink-100 hover:bg-pink-200 text-pink-600 px-4 rounded-xl transition-colors cursor-pointer" title="Buscar Cliente">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                            </div>
+                            <p id="co-dni-msg" class="text-[10px] text-gray-400 mt-1 ml-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
+                            <input type="text" id="co-cliente" required placeholder="Ej. María López" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                                <input type="text" id="co-telefono" placeholder="Opcional" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo</label>
+                                <input type="email" id="co-correo" placeholder="Opcional" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <h4 class="text-sm font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">2. Método de Pago</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="metodo-pago" value="Efectivo" checked class="peer sr-only">
+                            <div class="rounded-xl border border-gray-200 px-4 py-3 text-center peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition-all">
+                                <i class="fa-solid fa-money-bill-wave mb-1 text-lg block"></i><span class="text-xs font-bold uppercase tracking-wider">Efectivo</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="metodo-pago" value="Yape" class="peer sr-only">
+                            <div class="rounded-xl border border-gray-200 px-4 py-3 text-center peer-checked:border-[#742384] peer-checked:bg-[#742384]/10 peer-checked:text-[#742384] transition-all">
+                                <i class="fa-solid fa-mobile-screen-button mb-1 text-lg block"></i><span class="text-xs font-bold uppercase tracking-wider">Yape</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="metodo-pago" value="Plin" class="peer sr-only">
+                            <div class="rounded-xl border border-gray-200 px-4 py-3 text-center peer-checked:border-[#00E0ED] peer-checked:bg-[#00E0ED]/10 peer-checked:text-[#00B0BA] transition-all">
+                                <i class="fa-solid fa-qrcode mb-1 text-lg block"></i><span class="text-xs font-bold uppercase tracking-wider">Plin</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="metodo-pago" value="Transferencia" class="peer sr-only">
+                            <div class="rounded-xl border border-gray-200 px-4 py-3 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition-all">
+                                <i class="fa-solid fa-building-columns mb-1 text-lg block"></i><span class="text-xs font-bold uppercase tracking-wider">Transf.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-emerald-200 mt-6 cursor-pointer text-lg">
+                    Confirmar Cobro
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL GASTO INTERNO -->
+    <div id="modal-gasto" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md p-4 md:p-6 shadow-xl border border-pink-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold text-gray-900">Registrar Gasto del Negocio</h3>
+                <button onclick="cerrarModalGasto()" class="text-gray-400 hover:text-rose-500 cursor-pointer"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="guardarGasto(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría del Gasto</label>
+                    <select id="gasto-categoria" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50 cursor-pointer">
+                        <option value="Publicidad">Publicidad (Tarjetas, folletos, pauta)</option>
+                        <option value="Productos de Limpieza">Productos de Limpieza</option>
+                        <option value="Cortesías al Cliente">Cortesías al Cliente</option>
+                        <option value="Otros Gastos">Otros Gastos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Item / Insumo</label>
+                    <input type="text" id="gasto-item" required placeholder="Ej. Tarjetas de publicidad de mano" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Adquirida</label>
+                        <input type="number" id="gasto-cantidad" required min="1" placeholder="Ej. 100" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Costo Total de Compra (S/)</label>
+                        <input type="number" step="0.01" id="gasto-costo" required min="0.1" placeholder="Ej. 50.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition-all shadow-md shadow-pink-200 mt-4 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar Gasto Interno
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CLIENTE -->
+    <div id="modal-cliente" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md p-4 md:p-6 shadow-xl border border-pink-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="modal-cli-titulo" class="text-xl font-bold text-gray-900">Agregar Cliente</h3>
+                <button onclick="cerrarModalCliente()" class="text-gray-400 hover:text-rose-500 cursor-pointer transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="guardarCliente(event)" class="space-y-4">
+                <input type="hidden" id="cli-id">
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">DNI / Documento</label><input type="text" id="cli-dni" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label><input type="text" id="cli-nombre" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label><input type="text" id="cli-telefono" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label><input type="email" id="cli-correo" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"></div>
+                <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition-all shadow-md shadow-pink-200 mt-4 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PRODUCTO -->
+    <div id="modal-producto" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-4 md:p-6 shadow-xl border border-pink-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="modal-titulo" class="text-xl font-bold text-gray-900">Agregar Producto</h3>
+                <button onclick="cerrarModalProducto()" class="text-gray-400 hover:text-rose-500 cursor-pointer"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="guardarProducto(event)" class="space-y-4">
+                <input type="hidden" id="form-id">
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label><input type="text" id="form-nombre" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50/50"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Código</label><input type="text" id="form-codigo" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50/50 uppercase"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría</label><select id="form-categoria-select" onchange="toggleNuevaCategoria()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50/50 cursor-pointer"></select><input type="text" id="form-categoria-nueva" class="hidden mt-2 w-full px-4 py-2.5 rounded-xl border border-pink-300 text-sm bg-pink-50"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 border-t border-b border-gray-100 py-3 my-2 bg-gray-50/50 -mx-6 px-6">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Costo Lote Inicial (S/)</label><input type="number" step="0.01" id="form-costo" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Precio Venta (S/)</label><input type="number" step="0.01" id="form-precio" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white text-emerald-700 font-bold"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Stock Lote Inicial</label><input type="number" id="form-stock" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50/50"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vencimiento</label><input type="text" id="form-vencimiento" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50/50"></div>
+                </div>
+                <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md mt-4 cursor-pointer"><i class="fa-solid fa-floppy-disk mr-2"></i> Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CITA -->
+    <div id="modal-cita" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md p-4 md:p-6 shadow-xl border border-pink-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="modal-cita-titulo" class="text-xl font-bold text-gray-900">Agendar Cita</h3>
+                <button onclick="cerrarModalCita()" class="text-gray-400 hover:text-rose-500 cursor-pointer transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form onsubmit="guardarCita(event)" class="space-y-4">
+                <input type="hidden" id="cita-id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha</label>
+                        <input type="date" id="cita-fecha" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hora</label>
+                        <input type="time" id="cita-hora" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre del Cliente</label>
+                    <input type="text" id="cita-cliente" required placeholder="Ej. Camila Rodríguez" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Servicio / Descripción</label>
+                    <input type="text" id="cita-servicio" required placeholder="Ej. Maquillaje de novia" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label>
+                    <select id="cita-estado" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition-all shadow-md shadow-pink-200 mt-4 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar Cita
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL -->
+    <div id="modal-historial" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-4xl p-4 md:p-6 shadow-xl border border-pink-100 h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-5 shrink-0 border-b border-gray-100 pb-4">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-pink-500"></i> Historial de Ventas</h3>
+                <button onclick="cerrarModalHistorial()" class="text-gray-400 hover:text-rose-500 cursor-pointer"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <!-- BUSCADOR AGREGADO AL HISTORIAL -->
+            <div class="mb-4 shrink-0">
+                <div class="relative max-w-xs">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                    <input type="text" id="historial-search" onkeyup="filtrarHistorial()" placeholder="Filtrar por cliente..." class="w-full pl-8 pr-4 py-1.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white shadow-sm">
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-auto w-full">
+                <table class="w-full text-left border-collapse min-w-max">
+                    <thead><tr class="bg-gray-50 text-gray-500 text-xs font-bold uppercase tracking-wider border-b border-gray-100 sticky top-0"><th class="p-4 pl-6">Fecha</th><th class="p-4">Cliente</th><th class="p-4">Método</th><th class="p-4 text-center">Puntos</th><th class="p-4 text-right">Total</th></tr></thead>
+                    <tbody id="historial-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const d_hoy = new Date();
+        const strHoy = `${d_hoy.getFullYear()}-${String(d_hoy.getMonth()+1).padStart(2,'0')}-${String(d_hoy.getDate()).padStart(2,'0')}`;
+
+        // ESTADO POR DEFECTO DE LA APLICACIÓN (PUNTOS CONFIGURADOS A ESCALA 1:100 EN EL HISTORIAL PREVIO)
+        const defaultState = {
+            ingresos: 420.50, egresosFijos: 120.00, costosVentas: 150.00, 
+            categorias: ['Rostro', 'Ojos', 'Fijadores', 'Labios', 'Bolsas'],
+            productos: [
+                { id: 'p1', codigo: 'FNTY-001', nombre: 'Base Líquida Fenty', categoria: 'Rostro', precio: 45.0, stock: 24, vencimiento: '12/10/2026', estado: 'Disponible', lotes: [{ costo: 25.0, stock: 24 }] },
+                { id: 'p2', codigo: 'UD-NKD02', nombre: 'Paleta Sombras', categoria: 'Ojos', precio: 59.0, stock: 2, vencimiento: '15/07/2026', estado: 'Stock Crítico', lotes: [{ costo: 30.0, stock: 2 }] },
+                { id: 'p_bolsa', codigo: 'BOLS-001', nombre: 'Bolsas de Regalo Yuna', categoria: 'Bolsas', precio: 0.0, stock: 50, vencimiento: '-', estado: 'Disponible', lotes: [{ costo: 0.60, stock: 50 }], fechaCreacion: strHoy }
+            ],
+            clientes: [
+                { id: 'c1', dni: '76543210', nombre: 'Lucía Fernández', telefono: '987654321', correo: 'lucia@email.com', totalComprado: 114.00 }
+            ],
+            citas: [
+                { id: 'ct1', fecha: strHoy, hora: '15:30', cliente: 'Camila Rodríguez', servicio: 'Maquillaje Social', estado: 'Pendiente' },
+                { id: 'ct2', fecha: '2026-06-15', hora: '10:00', cliente: 'Andrea Silva', servicio: 'Prueba de Novia', estado: 'Pendiente' }
+            ],
+            gastosInternos: [
+                { id: 'g1', categoria: 'Publicidad', item: 'Tarjetas de publicidad', cantidadInicial: 100, cantidadActual: 40, costoTotal: 50.00, fechaIngreso: '2026-06-10', fechaFin: null, diasDuracion: null }
+            ],
+            cart: [],
+            historialVentas: [
+                { fecha: '12/06/2026, 09:15', cliente: 'Cliente Anónimo', metodo: 'Yape', total: 45.00, puntos: 0 },
+                { fecha: '11/06/2026, 16:30', cliente: 'Lucía Fernández', metodo: 'Efectivo', total: 114.00, puntos: 1 }
+            ]
+        };
+
+        // CARGA INTELIGENTE DESDE LOCALSTORAGE PARA MANTENER LA DEMO FUNCIONAL
+        let appState = localStorage.getItem('yuna_demo_state') ? JSON.parse(localStorage.getItem('yuna_demo_state')) : defaultState;
+
+        const format = (val) => `S/ ${val.toFixed(2)}`;
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function updateUI() {
+            const currentCapital = appState.productos.reduce((sum, p) => sum + (p.precio * p.stock), 0);
+            const totalGastosInternos = appState.gastosInternos.reduce((sum, g) => sum + g.costoTotal, 0);
+            const totalEgresos = appState.egresosFijos + appState.costosVentas + totalGastosInternos;
+            const gananciaNeta = appState.ingresos - totalEgresos;
+
+            document.getElementById('dash-ingresos').innerText = format(appState.ingresos);
+            document.getElementById('dash-capital').innerText = format(currentCapital);
+            document.getElementById('fin-ingresos').innerText = format(appState.ingresos);
+            document.getElementById('fin-egresos').innerText = format(totalEgresos);
+            document.getElementById('fin-balance').innerText = format(gananciaNeta);
+            document.getElementById('fin-capital').innerText = format(currentCapital);
+
+            const citasHoyNum = appState.citas.filter(c => c.fecha === strHoy).length;
+            document.getElementById('dash-citas-hoy').innerText = citasHoyNum;
+
+            const stockCritico = appState.productos.filter(p => p.stock <= 5).length;
+            document.getElementById('dash-stock-alert').innerText = `${stockCritico} Items`;
+
+            const bolsaProd = appState.productos.find(p => p.codigo === 'BOLS-001');
+            if(bolsaProd) {
+                document.getElementById('gasto-bolsas-stock').innerText = `${bolsaProd.stock} unidades`;
+                const inversionBolsas = bolsaProd.lotes.reduce((sum, l) => sum + (l.costo * (l.stockInitial || l.stock)), 0);
+                document.getElementById('gasto-bolsas-inversion').innerText = format(inversionBolsas);
+                
+                const iniciales = bolsaProd.lotes.reduce((sum, l) => sum + (l.stockInitial || l.stock), 0);
+                const consumidas = iniciales - bolsaProd.stock;
+                if(consumidas > 0) {
+                    const diffDias = Math.ceil(Math.abs(new Date() - new Date(bolsaProd.fechaCreacion)) / (1000 * 60 * 60 * 24)) || 1;
+                    document.getElementById('gasto-bolsas-duracion').innerText = `${consumidas} entregadas en ${diffDias} día(s)`;
+                } else {
+                    document.getElementById('gasto-bolsas-duracion').innerText = "Sin consumos aún";
+                }
+            }
+
+            const query = document.getElementById('pos-search').value.toLowerCase();
+            const posCatalog = document.getElementById('pos-catalog');
+            const prods = appState.productos.filter(p => p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query));
+            
+            posCatalog.innerHTML = prods.length === 0 ? `<div class="col-span-full text-center text-gray-400 py-8">No se encontraron productos.</div>` : 
+                prods.map(p => `
+                    <button onclick="addToCart('${p.id}')" ${p.stock <= 0 ? 'disabled' : ''} class="bg-white p-4 rounded-xl border border-pink-100 shadow-sm hover:border-pink-400 text-left transition-all flex justify-between items-center group cursor-pointer ${p.stock <= 0 ? 'opacity-50' : ''}">
+                        <div class="pr-2"><p class="font-bold text-sm text-gray-900 leading-tight">${p.nombre}</p><p class="text-[11px] text-gray-400 mt-1">Cód: ${p.codigo} • Stock: ${p.stock}</p></div>
+                        <span class="font-bold text-emerald-600 text-sm bg-emerald-50 px-2.5 py-1 rounded-lg shrink-0">${format(p.precio)}</span>
+                    </button>
+                `).join('');
+
+            document.getElementById('clientes-table-body').innerHTML = appState.clientes.map(c => `
+                <tr class="hover:bg-gray-50/50">
+                    <td class="p-4 pl-6 text-xs font-mono font-bold text-gray-500">${c.dni}</td>
+                    <td class="p-4 font-bold text-gray-900">${c.nombre}</td>
+                    <td class="p-4"><p class="text-xs text-gray-600"><i class="fa-solid fa-phone mr-1"></i> ${c.telefono || '-'}</p><p class="text-xs text-gray-400"><i class="fa-solid fa-envelope mr-1"></i> ${c.correo || '-'}</p></td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="enviarCRM('cita', '${c.nombre}', '${c.telefono}')" class="bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-purple-100 transition-colors cursor-pointer" title="Recordatorio Cita"><i class="fa-regular fa-calendar-check"></i> Cita</button>
+                            <button onclick="enviarCRM('gracias', '${c.nombre}', '${c.telefono}')" class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer" title="Agradecer Compra"><i class="fa-solid fa-heart"></i> Gracias</button>
+                            <button onclick="enviarCRM('cumple', '${c.nombre}', '${c.telefono}')" class="bg-pink-50 text-pink-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-pink-100 transition-colors cursor-pointer" title="Cumpleaños"><i class="fa-solid fa-cake-candles"></i> Cumple</button>
+                        </div>
+                    </td>
+                    <td class="p-4 text-center font-bold text-emerald-600">${format(c.totalComprado)}</td>
+                    <td class="p-4 pr-6 text-center"><button onclick="abrirModalCliente('${c.id}')" class="text-blue-500 hover:text-blue-700 cursor-pointer mr-3"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="eliminarCliente('${c.id}')" class="text-rose-500 hover:text-rose-700 cursor-pointer"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('inventory-table-body').innerHTML = appState.productos.map(p => {
+                const costosTxt = p.lotes.map(l => `S/ ${l.costo.toFixed(2)} (x${l.stock})`).join('<br>');
+                return `
+                    <tr class="hover:bg-gray-50/50">
+                        <td class="p-4 pl-6 text-xs font-mono font-bold">${p.codigo}</td>
+                        <td class="p-4 font-bold">${p.nombre}</td>
+                        <td class="p-4 text-xs">${p.categoria}</td>
+                        <td class="p-4 text-xs"><span class="text-gray-400">Lotes Costo:</span><br><span class="font-mono text-gray-700 font-medium">${costosTxt}</span><br><span class="font-bold text-emerald-600">P. Venta: ${format(p.precio)}</span></td>
+                        <td class="p-4 text-center font-bold text-base">${p.stock}</td>
+                        <td class="p-4 text-xs font-medium text-gray-500">${p.lotes.length} lote(s)</td>
+                        <td class="p-4"><span class="px-2 py-1 text-[10px] rounded bg-gray-100 font-bold uppercase">${p.estado}</span></td>
+                        <td class="p-4 pr-6 text-center"><button onclick="abrirModalProducto('${p.id}')" class="text-blue-500 mr-2"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarProducto('${p.id}')" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('gastos-table-body').innerHTML = appState.gastosInternos.map(g => {
+                let statusBadge = '';
+                if(g.cantidadActual === 0) {
+                    statusBadge = `<span class="px-2 py-1 text-[10px] rounded bg-rose-100 text-rose-700 font-bold uppercase block text-center">Agotado en ${g.diasDuracion} días</span>`;
+                } else if (g.cantidadActual <= g.cantidadInicial * 0.2) {
+                    statusBadge = `<span class="px-2 py-1 text-[10px] rounded bg-amber-100 text-amber-700 font-bold uppercase block text-center animate-pulse">¡Por Agotarse! (${g.cantidadActual} left)</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-1 text-[10px] rounded bg-emerald-100 text-emerald-700 font-bold uppercase block text-center">Activo</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-gray-50/50">
+                        <td class="p-4 pl-6 font-bold text-pink-600 text-xs uppercase">${g.categoria}</td>
+                        <td class="p-4 font-semibold text-gray-900">${g.item}</td>
+                        <td class="p-4 text-center font-mono">${g.cantidadInicial}</td>
+                        <td class="p-4 text-center font-mono font-bold ${g.cantidadActual === 0 ? 'text-rose-500': 'text-gray-900'}">${g.cantidadActual}</td>
+                        <td class="p-4 text-right font-bold text-rose-500">${format(g.costoTotal)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="registrarConsumoGasto('${g.id}')" ${g.cantidadActual === 0 ? 'disabled' : ''} class="bg-white border border-gray-200 text-gray-700 px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-pink-50 hover:text-pink-600 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-minus"></i> Consumir
+                            </button>
+                        </td>
+                        <td class="p-4 pr-6">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const citasOrdenadas = [...appState.citas].sort((a,b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
+            document.getElementById('citas-table-body').innerHTML = citasOrdenadas.map(c => `
+                <tr class="hover:bg-gray-50/50">
+                    <td class="p-4 pl-6 text-xs font-mono font-bold text-gray-500">${c.fecha}</td>
+                    <td class="p-4 font-bold text-gray-900">${c.hora}</td>
+                    <td class="p-4 font-medium text-gray-900">${c.cliente}</td>
+                    <td class="p-4 text-gray-600 text-sm">${c.servicio}</td>
+                    <td class="p-4"><span class="px-2 py-1 text-[10px] rounded ${c.estado === 'Completado' ? 'bg-emerald-100 text-emerald-700' : c.estado === 'Cancelado' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'} font-bold uppercase">${c.estado}</span></td>
+                    <td class="p-4 pr-6 text-center"><button onclick="abrirModalCita('${c.id}')" class="text-blue-500 hover:text-blue-700 cursor-pointer mr-3"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="eliminarCita('${c.id}')" class="text-rose-500 hover:text-rose-700 cursor-pointer"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `).join('');
+
+            renderCart();
+
+            // SJA GUARDADO AUTOMÁTICO EN EL NAVEGADOR
+            localStorage.setItem('yuna_demo_state', JSON.stringify(appState));
+        }
+
+        function enviarCRM(tipo, nombre, telefono) {
+            if(!telefono || telefono === '' || telefono === '-') {
+                alert("⚠️ Este cliente no cuenta con número telefónico registrado para el CRM.");
+                return;
+            }
+            let mensaje = "";
+            if(tipo === 'cita') {
+                mensaje = `Hola *${nombre}*, te saludamos desde *Yuna DEMO* ✨ Queríamos recordarte que tu hermosa cita programada está próxima. ¡Nos estamos preparando para consentirte! 💕`;
+            } else if(tipo === 'gracias') {
+                mensaje = `¡Muchísimas gracias por tu compra, *${nombre}*! 🥰 En *Yuna DEMO* valoramos mucho tu preferencia. Esperamos que disfrutes al máximo tus productos de belleza. ¡Vuelve pronto! 💄`;
+            } else if(tipo === 'cumple') {
+                mensaje = `¡Feliz Cumpleaños, *${nombre}*! 🎉🥳 Todo el equipo de *Yuna DEMO* te desea un día espectacular lleno de brillo. Recuerda que tienes un obsequio especial y un descuento exclusivo esperando por ti en el estudio. ¡Pasa a celebrar con nosotros! 🎂🎁`;
+            }
+            const url = `https://wa.me/51${telefono}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        function abrirModalGasto() { document.getElementById('modal-gasto').classList.remove('hidden'); }
+        function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
+        
+        function guardarGasto(e) {
+            e.preventDefault();
+            const cantidad = parseInt(document.getElementById('gasto-cantidad').value);
+            const data = {
+                id: 'g' + Date.now(),
+                categoria: document.getElementById('gasto-categoria').value,
+                item: document.getElementById('gasto-item').value,
+                highlight: true,
+                cantidadInicial: cantidad,
+                cantidadActual: cantidad,
+                costoTotal: parseFloat(document.getElementById('gasto-costo').value),
+                fechaIngreso: strHoy,
+                fechaFin: null,
+                diasDuracion: null
+            };
+            appState.gastosInternos.push(data);
+            cerrarModalGasto();
+            updateUI();
+        }
+
+        function registrarConsumoGasto(id) {
+            const g = appState.gastosInternos.find(x => x.id === id);
+            if(!g) return;
+            const consumido = parseInt(prompt(`¿Cuántas unidades de "${g.item}" se consumieron hoy antes del cierre de caja? (Disponibles: ${g.cantidadActual})`, "1"));
+            
+            if(isNaN(consumido) || consumido <= 0) return;
+            if(consumido > g.cantidadActual) {
+                alert("❌ No puedes registrar un consumo mayor a la cantidad disponible.");
+                return;
+            }
+
+            g.cantidadActual -= consumido;
+            if(g.cantidadActual === 0) {
+                g.fechaFin = strHoy;
+                const fIni = new Date(g.fechaIngreso);
+                const fFin = new Date(g.fechaFin);
+                const diffTime = Math.abs(fFin - fIni);
+                g.diasDuracion = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+                alert(`📢 ¡Alerta de Stock! El ítem corporativo "${g.item}" se ha agotado por completo hoy. Duración total del recurso: ${g.diasDuracion} días.`);
+            }
+            updateUI();
+        }
+
+        function guardarProducto(e) {
+            e.preventDefault();
+            const id = document.getElementById('form-id').value;
+            const codigo = document.getElementById('form-codigo').value.toUpperCase();
+            const nombre = document.getElementById('form-nombre').value;
+            const costoIngresado = parseFloat(document.getElementById('form-costo').value);
+            const precioIngresado = parseFloat(document.getElementById('form-precio').value);
+            const stockIngresado = parseInt(document.getElementById('form-stock').value);
+            const vencimiento = document.getElementById('form-vencimiento').value;
+
+            let cat = document.getElementById('form-categoria-select').value;
+            if(cat==='NEW') { 
+                cat = document.getElementById('form-categoria-nueva').value; 
+                if(cat && !appState.categorias.includes(cat)) appState.categorias.push(cat); 
+            }
+
+            let prodExistente = appState.productos.find(x => x.codigo === codigo && x.id !== id);
+            
+            if(prodExistente) {
+                const confirmarSuma = confirm(`El producto con código [${codigo}] ya está registrado como "${prodExistente.nombre}".\n\n¿Deseas sumar nuevo stock a este registro aplicando la validación exacta de costos?`);
+                if(!confirmarSuma) return;
+
+                const mismoCosto = confirm(`💰 ¿Este nuevo lote ingresará con el MISMO PRECIO DE COMPRA ANTERIOR (S/ ${prodExistente.lotes[prodExistente.lotes.length - 1].costo.toFixed(2)})?\n\n[Aceptar] = Mantener mismo costo.\n[Cancelar] = Ingresar nuevo precio de costo para rentabilidad exacta.`);
+                
+                let costoFinalLote = costoIngresado;
+                if(!mismoCosto) {
+                    const costPrompt = prompt("Ingrese el NUEVO precio de compra por unidad para este lote de stock:", costoIngresado);
+                    if(costPrompt === null) return;
+                    costoFinalLote = parseFloat(costPrompt) || costoIngresado;
+                } else {
+                    costoFinalLote = prodExistente.lotes[prodExistente.lotes.length - 1].costo;
+                }
+
+                prodExistente.lotes.push({ costo: costoFinalLote, stock: stockIngresado, stockInitial: stockIngresado });
+                prodExistente.stock = prodExistente.lotes.reduce((sum, l) => sum + l.stock, 0);
+                prodExistente.precio = precioIngresado; 
+                prodExistente.estado = prodExistente.stock === 0 ? 'Agotado' : (prodExistente.stock <= 5 ? 'Stock Crítico' : 'Disponible');
+                
+                cerrarModalProducto();
+                updateUI();
+                return;
+            }
+
+            const p = {
+                id: id || 'p' + Date.now(),
+                codigo, nombre, categoria: cat, precio: precioIngresado, stock: stockIngresado, vencimiento,
+                lotes: [{ costo: costoIngresado, stock: stockIngresado, stockInitial: stockIngresado }]
+            };
+            p.stock = p.lotes.reduce((sum, l) => sum + l.stock, 0);
+            p.estado = p.stock === 0 ? 'Agotado' : (p.stock <= 5 ? 'Stock Crítico' : 'Disponible');
+
+            if(id) { 
+                const idx = appState.productos.findIndex(x => x.id === id);
+                p.lotes = appState.productos[idx].lotes; 
+                p.stock = p.lotes.reduce((sum, l) => sum + l.stock, 0);
+                Object.assign(appState.productos[idx], p); 
+            } else { 
+                appState.productos.push(p); 
+            }
+            cerrarModalProducto(); 
+            updateUI();
+        }
+
+        function confirmarPago(e) {
+            e.preventDefault();
+            let totalTicket = 0;
+
+            if(document.getElementById('co-lleva-bolsa').checked) {
+                const bProd = appState.productos.find(p => p.codigo === 'BOLS-001');
+                if(bProd && bProd.stock > 0) {
+                    bProd.stock--;
+                    bProd.lotes.sort((a,b) => b.costo - a.costo);
+                    for(let l of bProd.lotes) {
+                        if(l.stock > 0) { l.stock--; break; }
+                    }
+                    bProd.estado = bProd.stock === 0 ? 'Agotado' : (bProd.stock <= 5 ? 'Stock Crítico' : 'Disponible');
+                } else {
+                    alert("⚠️ Advertencia: No quedan existencias de Bolsas Corporativas en el inventario.");
+                }
+            }
+
+            appState.cart.forEach(item => {
+                const prod = appState.productos.find(p => p.id === item.id);
+                if(prod) {
+                    let unidadesRequeridas = item.qty;
+                    totalTicket += (item.precio * item.qty);
+
+                    prod.lotes.sort((a, b) => b.costo - a.costo);
+
+                    for(let lote of prod.lotes) {
+                        if(unidadesRequeridas <= 0) break;
+                        if(lote.stock > 0) {
+                            let aDescontar = Math.min(lote.stock, unidadesRequeridas);
+                            lote.stock -= aDescontar;
+                            unidadesRequeridas -= aDescontar;
+                            appState.costosVentas += (lote.costo * aDescontar);
+                        }
+                    }
+                    prod.stock = prod.lotes.reduce((sum, l) => sum + l.stock, 0);
+                    prod.estado = prod.stock === 0 ? 'Agotado' : (prod.stock <= 5 ? 'Stock Crítico' : 'Disponible');
+                }
+            });
+
+            appState.ingresos += totalTicket;
+
+            const dni = document.getElementById('co-dni').value.trim();
+            let nombre = document.getElementById('co-cliente').value.trim();
+            const tel = document.getElementById('co-telefono').value.trim();
+            const correo = document.getElementById('co-correo').value.trim();
+
+            if (dni && nombre) {
+                let cli = appState.clientes.find(c => c.dni === dni);
+                if (!cli) {
+                    cli = { id: 'c'+Date.now(), dni, nombre, telefono: tel, correo: correo, totalComprado: 0 };
+                    appState.clientes.push(cli);
+                }
+                cli.totalComprado += totalTicket;
+            } else if(!nombre) {
+                nombre = "Cliente Anónimo";
+            }
+
+            const metodoPago = document.querySelector('input[name="metodo-pago"]:checked').value;
+            const d = new Date();
+            
+            // ACTUALIZACIÓN DE REGLA: 1 PUNTO CADA 100 SOLES DE COMPRA EN ESTA TRANSACCIÓN
+            appState.historialVentas.unshift({ 
+                fecha: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}, ${d.getHours()}:${d.getMinutes()}`, 
+                cliente: nombre, 
+                metodo: metodoPago, 
+                total: totalTicket,
+                puntos: Math.floor(totalTicket / 100) 
+            });
+
+            alert(`✅ ¡Cobro Exitoso en Yuna DEMO!\nTotal: ${format(totalTicket)}\nMétodo: ${metodoPago}\nInventario y Costos de Lotes actualizados.`);
+            cerrarModalCheckout(); 
+            appState.cart = []; 
+            updateUI(); 
+        }
+
+        function abrirModalCheckout() {
+            if (appState.cart.length === 0) return alert("Ticket vacío.");
+            document.getElementById('checkout-total').innerText = format(appState.cart.reduce((s,i)=>s+(i.precio*i.qty),0));
+            
+            const bolsaProd = appState.productos.find(p => p.codigo === 'BOLS-001');
+            document.getElementById('co-bolsa-stock').innerText = `Stock: ${bProd ? bolsaProd.stock : 0}`;
+            document.getElementById('co-lleva-bolsa').checked = false;
+
+            document.getElementById('co-dni').value = ''; document.getElementById('co-cliente').value = ''; 
+            document.getElementById('co-telefono').value = ''; document.getElementById('co-correo').value = '';
+            document.getElementById('co-dni-msg').innerText = '';
+            document.getElementById('modal-checkout').classList.remove('hidden');
+        }
+
+        function cerrarModalCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('bg-pink-500', 'text-white'); b.classList.add('text-gray-500'); });
+            
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`btn-${tabId}`).classList.add('bg-pink-500', 'text-white');
+            document.getElementById(`btn-${tabId}`).classList.remove('text-gray-500');
+            
+            const titles = { dashboard: 'Resumen del Negocio', pos: 'Terminal de Ventas (POS)', clientes: 'CRM Panel de Control', inventario: 'Inventario de Cosméticos', gastos: 'Gastos Internos y Consumibles', citas: 'Agenda de Citas', finanzas: 'Reporte Financiero' };
+            document.getElementById('page-title').innerText = titles[tabId];
+            
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if(!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+            }
+        }
+
+        function addToCart(id) {
+            const p = appState.productos.find(x => x.id === id);
+            const item = appState.cart.find(x => x.id === id);
+            if (p.stock > (item ? item.qty : 0)) {
+                if (item) item.qty++; else appState.cart.push({ id, nombre: p.nombre, costo: p.lotes[0].costo, precio: p.precio, qty: 1 });
+            }
+            updateUI();
+        }
+
+        function removeFromCart(id) {
+            appState.cart = appState.cart.filter(item => item.id !== id);
+            updateUI();
+        }
+
+        function clearCart() { appState.cart = []; updateUI(); }
+        
+        function renderCart() {
+            const c = document.getElementById('cart-items'), t = document.getElementById('cart-total');
+            if (appState.cart.length === 0) { c.innerHTML = `<p class="text-center text-gray-400 mt-8">Vacío</p>`; t.innerText = "S/ 0.00"; return; }
+            let sum = 0;
+            
+            c.innerHTML = appState.cart.map(i => {
+                sum += i.precio * i.qty;
+                return `
+                    <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <p class="font-medium text-sm truncate text-gray-900">${i.nombre}</p>
+                            <p class="text-xs text-gray-400">${i.qty} x ${format(i.precio)}</p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <span class="font-semibold text-gray-900 text-sm">${format(i.precio * i.qty)}</span>
+                            <button onclick="removeFromCart('${i.id}')" class="text-gray-400 hover:text-rose-500 transition-colors cursor-pointer p-1" title="Quitar item">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
+            t.innerText = format(sum);
+        }
+
+        function buscarClienteDNI() {
+            const dni = document.getElementById('co-dni').value.trim();
+            const msg = document.getElementById('co-dni-msg');
+            if(!dni) { msg.innerText = "Ingrese un DNI"; msg.className = "text-[10px] text-rose-500 mt-1 ml-1"; return; }
+            const cli = appState.clientes.find(c => c.dni === dni);
+            if(cli) {
+                document.getElementById('co-cliente').value = cli.nombre;
+                document.getElementById('co-telefono').value = cli.telefono;
+                document.getElementById('co-correo').value = cli.correo;
+                msg.innerText = "¡Cliente encontrado!";
+                msg.className = "text-[10px] font-bold text-emerald-500 mt-1 ml-1";
+            } else {
+                document.getElementById('co-cliente').value = ''; document.getElementById('co-telefono').value = ''; document.getElementById('co-correo').value = '';
+                msg.innerText = "Cliente nuevo. Llene los datos para registrarlo.";
+                msg.className = "text-[10px] text-amber-500 mt-1 ml-1";
+                document.getElementById('co-cliente').focus();
+            }
+        }
+
+        function abrirModalCliente(id=null) {
+            if(id) {
+                const c = appState.clientes.find(x => x.id === id);
+                document.getElementById('cli-id').value = c.id; document.getElementById('cli-dni').value = c.dni;
+                document.getElementById('cli-nombre').value = c.nombre; document.getElementById('cli-telefono').value = c.telefono;
+                document.getElementById('cli-correo').value = c.correo;
+                document.getElementById('modal-cli-titulo').innerText = 'Editar Cliente';
+            } else {
+                document.getElementById('cli-id').value = ''; document.getElementById('cli-dni').value = '';
+                document.getElementById('cli-nombre').value = ''; document.getElementById('cli-telefono').value = '';
+                document.getElementById('cli-correo').value = '';
+                document.getElementById('modal-cli-titulo').innerText = 'Agregar Cliente';
+            }
+            document.getElementById('modal-cliente').classList.remove('hidden');
+        }
+        function cerrarModalCliente() { document.getElementById('modal-cliente').classList.add('hidden'); }
+        function guardarCliente(e) {
+            e.preventDefault();
+            const id = document.getElementById('cli-id').value;
+            const data = { dni: document.getElementById('cli-dni').value, nombre: document.getElementById('cli-nombre').value, telefono: document.getElementById('cli-telefono').value, correo: document.getElementById('cli-correo').value };
+            if(id) { Object.assign(appState.clientes.find(c => c.id === id), data); } 
+            else { data.id = 'c'+Date.now(); data.totalComprado = 0; appState.clientes.push(data); }
+            cerrarModalCliente(); updateUI();
+        }
+        function eliminarCliente(id) { if(confirm('¿Borrar cliente?')) { appState.clientes = appState.clientes.filter(c => c.id !== id); updateUI(); } }
+
+        function toggleNuevaCategoria() { const s = document.getElementById('form-categoria-select'), i = document.getElementById('form-categoria-nueva'); if(s.value==='NEW'){ i.classList.remove('hidden'); i.required=true; }else{ i.classList.add('hidden'); i.required=false; } }
+        function abrirModalProducto(id=null) {
+            const s = document.getElementById('form-categoria-select');
+            s.innerHTML = appState.categorias.map(c => `<option value="${c}">${c}</option>`).join('') + `<option value="NEW" class="text-pink-600">+ Nueva Categoría</option>`;
+            if(id) {
+                const p = appState.productos.find(x => x.id === id);
+                ['id','codigo','nombre','precio','stock','vencimiento'].forEach(k => document.getElementById('form-'+k).value = p[k]);
+                document.getElementById('form-costo').value = p.lotes[0].costo;
+                s.value = p.categoria || 'NEW'; document.getElementById('modal-titulo').innerText = 'Editar Producto';
+            } else {
+                ['id','codigo','nombre','costo','precio','stock','vencimiento'].forEach(k => document.getElementById('form-'+k).value = '');
+                s.value = appState.categorias[0] || 'NEW'; document.getElementById('modal-titulo').innerText = 'Agregar Producto';
+            }
+            toggleNuevaCategoria(); document.getElementById('modal-producto').classList.remove('hidden');
+        }
+        function cerrarModalProducto() { document.getElementById('modal-producto').classList.add('hidden'); }
+        function eliminarProducto(id) { if(confirm('¿Borrar producto?')) { appState.productos = appState.productos.filter(x => x.id !== id); updateUI(); } }
+
+        function abrirModalCita(id=null) {
+            if(id) {
+                const c = appState.citas.find(x => x.id === id);
+                document.getElementById('cita-id').value = c.id; document.getElementById('cita-fecha').value = c.fecha;
+                document.getElementById('cita-hora').value = c.hora; document.getElementById('cita-cliente').value = c.cliente;
+                document.getElementById('cita-servicio').value = c.servicio; document.getElementById('cita-estado').value = c.estado;
+                document.getElementById('modal-cita-titulo').innerText = 'Editar Cita';
+            } else {
+                document.getElementById('cita-id').value = ''; document.getElementById('cita-fecha').value = strHoy;
+                document.getElementById('cita-hora').value = '10:00'; document.getElementById('cita-cliente').value = '';
+                document.getElementById('cita-servicio').value = ''; document.getElementById('cita-estado').value = 'Pendiente';
+                document.getElementById('modal-cita-titulo').innerText = 'Agendar Nueva Cita';
+            }
+            document.getElementById('modal-cita').classList.remove('hidden');
+        }
+        function cerrarModalCita() { document.getElementById('modal-cita').classList.add('hidden'); }
+        function guardarCita(e) {
+            e.preventDefault();
+            const id = document.getElementById('cita-id').value;
+            const data = { fecha: document.getElementById('cita-fecha').value, hora: document.getElementById('cita-hora').value, cliente: document.getElementById('cita-cliente').value, servicio: document.getElementById('cita-servicio').value, estado: document.getElementById('cita-estado').value };
+            if(id) { Object.assign(appState.citas.find(c => c.id === id), data); } else { data.id = 'ct'+Date.now(); appState.citas.push(data); }
+            cerrarModalCita(); updateUI();
+        }
+        function eliminarCita(id) { if(confirm('¿Seguro que deseas eliminar esta cita?')) { appState.citas = appState.citas.filter(c => c.id !== id); updateUI(); } }
+
+        // FUNCIONES ACTUALIZADAS DE HISTORIAL CON INTEGRACIÓN DE FILTRO Y REGLA DE PUNTOS ESCALADA (100 SOLES = 1 PUNTO)
+        function abrirModalHistorial() {
+            document.getElementById('historial-search').value = '';
+            filtrarHistorial();
+            document.getElementById('modal-historial').classList.remove('hidden');
+        }
+        function cerrarModalHistorial() { document.getElementById('modal-historial').classList.add('hidden'); }
+        
+        function filtrarHistorial() {
+            const q = document.getElementById('historial-search').value.toLowerCase();
+            const filtrados = appState.historialVentas.filter(v => v.cliente.toLowerCase().includes(q));
+            document.getElementById('historial-table-body').innerHTML = filtrados.map(v => `
+                <tr class="hover:bg-gray-50/50">
+                    <td class="p-4">${v.fecha}</td>
+                    <td class="p-4 font-bold text-gray-900">${v.cliente}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded bg-gray-100 text-xs font-bold">${v.metodo}</span></td>
+                    <td class="p-4 text-center font-bold text-purple-600">${v.puntos || 0} pts</td>
+                    <td class="p-4 text-right font-bold text-emerald-600">${format(v.total)}</td>
+                </tr>
+            `).join('');
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
