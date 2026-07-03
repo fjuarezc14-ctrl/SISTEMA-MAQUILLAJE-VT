@@ -26,6 +26,10 @@ app.get('/api/health', (req, res) => {
 import authRoutes from './routes/auth.routes.js';
 app.use('/api/auth', authRoutes);
 
+// ── Rutas de Negocio (Protegidas) ──
+import apiRoutes from './routes/api.routes.js';
+app.use('/api', apiRoutes);
+
 // ── Manejador de rutas no encontradas ──
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
