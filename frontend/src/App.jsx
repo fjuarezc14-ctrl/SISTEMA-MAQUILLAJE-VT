@@ -6,6 +6,12 @@ import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import POS from './pages/POS';
+import Clientes from './pages/Clientes';
+import Inventario from './pages/Inventario';
+import Gastos from './pages/Gastos';
+import Citas from './pages/Citas';
+import Finanzas from './pages/Finanzas';
 
 function App() {
   return (
@@ -16,11 +22,16 @@ function App() {
           {/* Ruta pública de Login */}
           <Route path="/login" element={<Login />} />
 
-          {/* Rutas protegidas */}
+          {/* Rutas protegidas con Diseño Layout */}
           <Route element={<PrivateRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
-              {/* Las demás rutas de los módulos se agregarán aquí en fases posteriores */}
+              <Route path="/pos" element={<POS />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/inventario" element={<Inventario />} />
+              <Route path="/gastos" element={<Gastos />} />
+              <Route path="/citas" element={<Citas />} />
+              <Route path="/finanzas" element={<Finanzas />} />
             </Route>
           </Route>
 
