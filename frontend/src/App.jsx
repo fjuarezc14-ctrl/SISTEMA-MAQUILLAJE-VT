@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
@@ -17,8 +18,10 @@ function App() {
 
           {/* Rutas protegidas */}
           <Route element={<PrivateRoute />}>
-            <Route path="/" element={<Dashboard />} />
-            {/* Las demás rutas de los módulos se agregarán aquí */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Dashboard />} />
+              {/* Las demás rutas de los módulos se agregarán aquí en fases posteriores */}
+            </Route>
           </Route>
 
           {/* Redirección por defecto */}
