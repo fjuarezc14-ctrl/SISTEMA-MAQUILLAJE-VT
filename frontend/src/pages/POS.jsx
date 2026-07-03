@@ -23,6 +23,7 @@ const POS = () => {
   const [bolsaStock, setBolsaStock] = useState(0);
   const [dniMessage, setDniMessage] = useState('');
   const [clienteExiste, setClienteExiste] = useState(false);
+  const [searchPerformed, setSearchPerformed] = useState(false);
 
   // Sales History states
   const [history, setHistory] = useState([]);
@@ -91,12 +92,14 @@ const POS = () => {
     setStatusBolsa(false);
     setDniMessage('');
     setClienteExiste(false);
+    setSearchPerformed(false);
     setShowCheckoutModal(true);
   };
 
   const handleBuscarClienteDNI = async () => {
     if (!clienteDni.trim()) {
       setDniMessage('Ingrese un DNI');
+      setSearchPerformed(false);
       return;
     }
     try {
@@ -108,6 +111,7 @@ const POS = () => {
         setClienteCorreo(found.correo || '');
         setClienteFechaNacimiento(found.fechaNacimiento || '');
         setClienteExiste(true);
+        setSearchPerformed(true);
         setDniMessage('¡Cliente encontrado!');
       } else {
         setClienteNombre('');
@@ -115,6 +119,7 @@ const POS = () => {
         setClienteCorreo('');
         setClienteFechaNacimiento('');
         setClienteExiste(false);
+        setSearchPerformed(true);
         setDniMessage('Cliente nuevo. Llene los datos para registrarlo.');
       }
     } catch (err) {
@@ -125,6 +130,14 @@ const POS = () => {
 
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
+    if (clienteDni.trim() && !searchPerformed) {
+      toast.error('Por favor, busque el DNI con la lupa antes de confirmar el cobro.');
+      return;
+    }
+    if (clienteDni.trim() && !clienteExiste && !clienteNombre.trim()) {
+      toast.error('Por favor, ingrese el nombre del nuevo cliente para registrarlo.');
+      return;
+    }
     try {
       const res = await apiClient.post('/ventas', {
         items: cart,
@@ -371,62 +384,73 @@ const POS = () => {
                       </p>
                     )}
                   </div>
-                  {!clienteExiste ? (
-                    <>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
-                        <input
-                          type="text"
-                          value={clienteNombre}
-                          onChange={(e) => setClienteNombre(e.target.value)}
-                          placeholder="Ej. María López"
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {searchPerformed ? (
+                    !clienteExiste ? (
+                      <>
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
                           <input
                             type="text"
-                            value={clienteTelefono}
-                            onChange={(e) => setClienteTelefono(e.target.value)}
-                            placeholder="Opcional"
+                            required
+                            value={clienteNombre}
+                            onChange={(e) => setClienteNombre(e.target.value)}
+                            placeholder="Ej. María López"
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
                           />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                            <input
+                              type="text"
+                              value={clienteTelefono}
+                              onChange={(e) => setClienteTelefono(e.target.value)}
+                              placeholder="Opcional"
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Correo</label>
+                            <input
+                              type="email"
+                              value={clienteCorreo}
+                              onChange={(e) => setClienteCorreo(e.target.value)}
+                              placeholder="Opcional"
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
+                            />
+                          </div>
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Correo</label>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha de Nacimiento (Cumpleaños)</label>
                           <input
-                            type="email"
-                            value={clienteCorreo}
-                            onChange={(e) => setClienteCorreo(e.target.value)}
-                            placeholder="Opcional"
+                            type="date"
+                            value={clienteFechaNacimiento}
+                            onChange={(e) => setClienteFechaNacimiento(e.target.value)}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
                           />
                         </div>
+                      </>
+                    ) : (
+                      <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl space-y-2 mt-2">
+                        <p className="text-sm text-pink-700 font-bold flex items-center gap-1.5">
+                          <i className="fa-solid fa-circle-check text-pink-500"></i>
+                          Cliente Registrado
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 pt-1">
+                          <div><strong>Nombre:</strong> {clienteNombre}</div>
+                          <div><strong>Teléfono:</strong> {clienteTelefono || '-'}</div>
+                          <div><strong>Correo:</strong> {clienteCorreo || '-'}</div>
+                          <div><strong>Cumpleaños:</strong> {clienteFechaNacimiento || '-'}</div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha de Nacimiento (Cumpleaños)</label>
-                        <input
-                          type="date"
-                          value={clienteFechaNacimiento}
-                          onChange={(e) => setClienteFechaNacimiento(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
-                        />
-                      </div>
-                    </>
+                    )
                   ) : (
-                    <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl space-y-2 mt-2">
-                      <p className="text-sm text-pink-700 font-bold flex items-center gap-1.5">
-                        <i className="fa-solid fa-circle-check text-pink-500"></i>
-                        Cliente Registrado
+                    <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl text-xs text-gray-500 mt-2">
+                      <p className="font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
+                        <i className="fa-solid fa-circle-info text-pink-500"></i>
+                        Venta Rápida (Cliente Anónimo)
                       </p>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 pt-1">
-                        <div><strong>Nombre:</strong> {clienteNombre}</div>
-                        <div><strong>Teléfono:</strong> {clienteTelefono || '-'}</div>
-                        <div><strong>Correo:</strong> {clienteCorreo || '-'}</div>
-                        <div><strong>Cumpleaños:</strong> {clienteFechaNacimiento || '-'}</div>
-                      </div>
+                      Deje el DNI en blanco para proceder con una venta rápida. Si desea registrar o acumular puntos para un cliente, ingrese su DNI arriba y presione la lupa.
                     </div>
                   )}
                 </div>

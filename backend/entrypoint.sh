@@ -27,6 +27,10 @@ until npx prisma migrate deploy 2>&1; do
 done
 
 echo "✅ Migraciones aplicadas correctamente."
+
+echo "⚙️ Generando cliente de Prisma..."
+npx prisma generate
+
 echo "🚀 Iniciando servidor Express en puerto ${BACKEND_PORT:-3003}..."
 echo ""
 

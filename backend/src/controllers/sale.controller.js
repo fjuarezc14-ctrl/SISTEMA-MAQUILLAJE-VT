@@ -68,8 +68,8 @@ export const crearVenta = async (req, res) => {
         let unidadesRequeridas = item.qty;
         let costoTotalCalculado = 0;
 
-        // Ordenar lotes por costo descendente para priorizar el descuento de lotes más costosos
-        const lotesOrdenados = [...prod.lotes].sort((a, b) => b.costo.toNumber() - a.costo.toNumber());
+        // Ordenar lotes por fecha de ingreso (FIFO - Primero en Entrar, Primero en Salir) para priorizar los lotes más antiguos
+        const lotesOrdenados = [...prod.lotes].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
         for (const lote of lotesOrdenados) {
           if (unidadesRequeridas <= 0) break;
