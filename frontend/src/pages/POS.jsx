@@ -17,10 +17,12 @@ const POS = () => {
   const [clienteNombre, setClienteNombre] = useState('');
   const [clienteTelefono, setClienteTelefono] = useState('');
   const [clienteCorreo, setClienteCorreo] = useState('');
+  const [clienteFechaNacimiento, setClienteFechaNacimiento] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [statusBolsa, setStatusBolsa] = useState(false);
   const [bolsaStock, setBolsaStock] = useState(0);
   const [dniMessage, setDniMessage] = useState('');
+  const [clienteExiste, setClienteExiste] = useState(false);
 
   // Sales History states
   const [history, setHistory] = useState([]);
@@ -84,9 +86,11 @@ const POS = () => {
     setClienteNombre('');
     setClienteTelefono('');
     setClienteCorreo('');
+    setClienteFechaNacimiento('');
     setMetodoPago('Efectivo');
     setStatusBolsa(false);
     setDniMessage('');
+    setClienteExiste(false);
     setShowCheckoutModal(true);
   };
 
@@ -102,11 +106,15 @@ const POS = () => {
         setClienteNombre(found.nombre);
         setClienteTelefono(found.telefono || '');
         setClienteCorreo(found.correo || '');
+        setClienteFechaNacimiento(found.fechaNacimiento || '');
+        setClienteExiste(true);
         setDniMessage('¡Cliente encontrado!');
       } else {
         setClienteNombre('');
         setClienteTelefono('');
         setClienteCorreo('');
+        setClienteFechaNacimiento('');
+        setClienteExiste(false);
         setDniMessage('Cliente nuevo. Llene los datos para registrarlo.');
       }
     } catch (err) {
@@ -124,6 +132,7 @@ const POS = () => {
         clienteNombre,
         clienteTelefono,
         clienteCorreo,
+        clienteFechaNacimiento,
         metodoPago,
         statusBolsa
       });
@@ -362,38 +371,64 @@ const POS = () => {
                       </p>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
-                    <input
-                      type="text"
-                      value={clienteNombre}
-                      onChange={(e) => setClienteNombre(e.target.value)}
-                      placeholder="Ej. María López"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
-                      <input
-                        type="text"
-                        value={clienteTelefono}
-                        onChange={(e) => setClienteTelefono(e.target.value)}
-                        placeholder="Opcional"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
-                      />
+                  {!clienteExiste ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
+                        <input
+                          type="text"
+                          value={clienteNombre}
+                          onChange={(e) => setClienteNombre(e.target.value)}
+                          placeholder="Ej. María López"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                          <input
+                            type="text"
+                            value={clienteTelefono}
+                            onChange={(e) => setClienteTelefono(e.target.value)}
+                            placeholder="Opcional"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Correo</label>
+                          <input
+                            type="email"
+                            value={clienteCorreo}
+                            onChange={(e) => setClienteCorreo(e.target.value)}
+                            placeholder="Opcional"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha de Nacimiento (Cumpleaños)</label>
+                        <input
+                          type="date"
+                          value={clienteFechaNacimiento}
+                          onChange={(e) => setClienteFechaNacimiento(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl space-y-2 mt-2">
+                      <p className="text-sm text-pink-700 font-bold flex items-center gap-1.5">
+                        <i className="fa-solid fa-circle-check text-pink-500"></i>
+                        Cliente Registrado
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 pt-1">
+                        <div><strong>Nombre:</strong> {clienteNombre}</div>
+                        <div><strong>Teléfono:</strong> {clienteTelefono || '-'}</div>
+                        <div><strong>Correo:</strong> {clienteCorreo || '-'}</div>
+                        <div><strong>Cumpleaños:</strong> {clienteFechaNacimiento || '-'}</div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Correo</label>
-                      <input
-                        type="email"
-                        value={clienteCorreo}
-                        onChange={(e) => setClienteCorreo(e.target.value)}
-                        placeholder="Opcional"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
               

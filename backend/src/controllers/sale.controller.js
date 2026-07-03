@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 // ── POST /api/ventas (Registrar venta - descuento de stock y creación de registros) ──
 export const crearVenta = async (req, res) => {
   try {
-    const { items, clienteDni, clienteNombre, clienteTelefono, clienteCorreo, metodoPago, statusBolsa } = req.body;
+    const { items, clienteDni, clienteNombre, clienteTelefono, clienteCorreo, clienteFechaNacimiento, metodoPago, statusBolsa } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'La venta debe incluir al menos un producto.' });
@@ -131,6 +131,7 @@ export const crearVenta = async (req, res) => {
               nombre: clienteNombre,
               telefono: clienteTelefono || null,
               correo: clienteCorreo || null,
+              fechaNacimiento: clienteFechaNacimiento || null,
               totalComprado: totalVenta,
               puntosFidelidad: nuevosPuntos
             }

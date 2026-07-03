@@ -19,7 +19,7 @@ export const obtenerClientes = async (req, res) => {
 // ── POST /api/clientes (Crear cliente) ──
 export const crearCliente = async (req, res) => {
   try {
-    const { dni, nombre, telefono, correo } = req.body;
+    const { dni, nombre, telefono, correo, fechaNacimiento } = req.body;
 
     if (!dni || !nombre) {
       return res.status(400).json({ error: 'El DNI y el nombre son obligatorios.' });
@@ -39,7 +39,8 @@ export const crearCliente = async (req, res) => {
             activo: true,
             nombre,
             telefono: telefono || null,
-            correo: correo || null
+            correo: correo || null,
+            fechaNacimiento: fechaNacimiento || null
           }
         });
         return res.json({
@@ -55,7 +56,8 @@ export const crearCliente = async (req, res) => {
         dni,
         nombre,
         telefono: telefono || null,
-        correo: correo || null
+        correo: correo || null,
+        fechaNacimiento: fechaNacimiento || null
       }
     });
 
@@ -99,7 +101,8 @@ export const actualizarCliente = async (req, res) => {
         ...(dni && { dni }),
         ...(nombre && { nombre }),
         ...(telefono !== undefined && { telefono: telefono || null }),
-        ...(correo !== undefined && { correo: correo || null })
+        ...(correo !== undefined && { correo: correo || null }),
+        ...(fechaNacimiento !== undefined && { fechaNacimiento: fechaNacimiento || null })
       }
     });
 

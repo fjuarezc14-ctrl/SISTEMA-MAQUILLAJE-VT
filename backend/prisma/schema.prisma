@@ -69,6 +69,7 @@ model Cliente {
   nombre          String
   telefono        String?
   correo          String?
+  fechaNacimiento String?      // Opcional: fecha de nacimiento en formato YYYY-MM-DD
   totalComprado   Decimal      @default(0) @db.Decimal(10, 2)
   puntosFidelidad Int          @default(0) // 1 punto por cada S/ 100 de compra
   activo          Boolean      @default(true)

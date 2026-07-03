@@ -16,6 +16,7 @@ const Clientes = () => {
   const [dni, setDni] = useState('');
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
 
   const fetchClientes = async () => {
     setLoading(true);
@@ -40,6 +41,7 @@ const Clientes = () => {
     setDni('');
     setTelefono('');
     setCorreo('');
+    setFechaNacimiento('');
     setShowModal(true);
   };
 
@@ -49,13 +51,14 @@ const Clientes = () => {
     setDni(cliente.dni);
     setTelefono(cliente.telefono || '');
     setCorreo(cliente.correo || '');
+    setFechaNacimiento(cliente.fechaNacimiento || '');
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { dni, nombre, telefono, correo };
+      const payload = { dni, nombre, telefono, correo, fechaNacimiento };
       if (selectedCliente) {
         await apiClient.put(`/clientes/${selectedCliente.id}`, payload);
         toast.success('Cliente actualizado exitosamente.');
@@ -82,6 +85,16 @@ const Clientes = () => {
         toast.error('Error al eliminar el cliente.');
       }
     }
+  };
+
+  const esCumpleanosHoy = (fechaStr) => {
+    if (!fechaStr) return false;
+    const partes = fechaStr.split('-');
+    if (partes.length < 3) return false;
+    const mes = parseInt(partes[1]);
+    const dia = parseInt(partes[2]);
+    const hoy = new Date();
+    return (hoy.getMonth() + 1) === mes && hoy.getDate() === dia;
   };
 
   const enviarCRM = (tipo, name, phone) => {
@@ -160,7 +173,14 @@ const Clientes = () => {
                 filteredClientes.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 pl-6 text-xs font-mono font-bold text-gray-500">{c.dni}</td>
-                    <td className="p-4 font-bold text-gray-900">{c.nombre}</td>
+                    <td className="p-4 font-bold text-gray-900">
+                      {c.nombre}
+                      {esCumpleanosHoy(c.fechaNacimiento) && (
+                        <span className="ml-2 inline-flex items-center gap-1 bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                          🎁 ¡Hoy cumple años!
+                        </span>
+                      )}
+                    </td>
                     <td className="p-4">
                       <p className="text-xs text-gray-600">
                         <i className="fa-solid fa-phone mr-1"></i> {c.telefono || '-'}
@@ -275,6 +295,15 @@ const Clientes = () => {
                   value={correo}
                   onChange={(e) => setCorreo(e.target.value)}
                   placeholder="ejemplo@email.com"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha de Nacimiento (Cumpleaños)</label>
+                <input
+                  type="date"
+                  value={fechaNacimiento}
+                  onChange={(e) => setFechaNacimiento(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
                 />
               </div>
