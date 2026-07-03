@@ -228,15 +228,15 @@ const Inventario = () => {
                       <td className="p-4 font-bold text-gray-900">{p.nombre}</td>
                       <td className="p-4 text-xs font-medium text-gray-500">{p.categoria}</td>
                       <td className="p-4 text-xs">
+                        <div className="font-bold text-emerald-600 mb-1">P. Venta: {format(p.precio)}</div>
                         <span className="text-gray-400">Lotes Costo:</span>
-                        <div className="font-mono text-gray-700 font-medium my-0.5">
+                        <div className="font-mono text-gray-500 font-normal">
                           {p.lotes?.map((l) => (
                             <div key={l.id}>
                               {format(l.costo)} (x{l.stockActual})
                             </div>
                           ))}
                         </div>
-                        <span className="font-bold text-emerald-600">P. Venta: {format(p.precio)}</span>
                       </td>
                       <td className="p-4 text-center font-bold text-base text-gray-900">{p.stock}</td>
                       <td className="p-4 text-xs font-medium text-gray-500">
