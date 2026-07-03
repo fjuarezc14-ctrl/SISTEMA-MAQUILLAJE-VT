@@ -22,9 +22,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'GlowManager Pro', version: '1.0.0' });
 });
 
-// ── Rutas (se irán agregando en fases siguientes) ──
-// import authRoutes from './routes/auth.routes.js';
-// app.use('/api/auth', authRoutes);
+// ── Rutas de Autenticación ──
+import authRoutes from './routes/auth.routes.js';
+app.use('/api/auth', authRoutes);
 
 // ── Manejador de rutas no encontradas ──
 app.use('*', (req, res) => {
