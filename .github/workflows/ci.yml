@@ -1,0 +1,84 @@
+name: GlowManager Pro CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: glowmanager
+          POSTGRES_PASSWORD: glowpassword123
+          POSTGRES_DB: glowmanager_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # ── BACKEND BUILD & VERIFY ──
+    - name: Set up Node.js for Backend
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Run Prisma Migrations and Generate Client
+      env:
+        DATABASE_URL: postgresql://glowmanager:glowpassword123@localhost:5432/glowmanager_db
+      run: |
+        cd backend
+        npx prisma migrate deploy
+        npx prisma generate
+
+    # ── FRONTEND BUILD & VERIFY ──
+    - name: Set up Node.js for Frontend
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm run build
+
+    # ── DOCKER COMPOSE SANITY CHECK ──
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Verify Docker Compose Build
+      env:
+        POSTGRES_USER: glowmanager
+        POSTGRES_PASSWORD: glowpassword123
+        POSTGRES_DB: glowmanager_db
+        DATABASE_URL: postgresql://glowmanager:glowpassword123@glowmanager_db:5432/glowmanager_db
+        JWT_SECRET: test_jwt_secret_value_for_ci_pipeline_should_be_long_enough
+        CORS_ORIGIN: http://localhost:5175
+      run: |
+        docker compose build
