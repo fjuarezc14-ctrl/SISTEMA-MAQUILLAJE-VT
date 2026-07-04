@@ -97,6 +97,34 @@ const Clientes = () => {
     return (hoy.getMonth() + 1) === mes && hoy.getDate() === dia;
   };
 
+  const obtenerAvisoCita = (citasList) => {
+    if (!citasList || citasList.length === 0) return null;
+    const cita = citasList[0];
+    const fechaCita = new Date(cita.fecha);
+    const ahora = new Date();
+    
+    const difMs = fechaCita.getTime() - ahora.getTime();
+    const difHoras = difMs / (1000 * 60 * 60);
+    
+    // Mostrar si es en las próximas 30 horas (para abarcar hoy y mañana)
+    if (difHoras < 0 || difHoras > 30) return null;
+    
+    const hh = String(fechaCita.getHours()).padStart(2, '0');
+    const min = String(fechaCita.getMinutes()).padStart(2, '0');
+    const horaStr = `${hh}:${min}`;
+    
+    // Verificar si es el mismo día calendario
+    const esHoy = fechaCita.getDate() === ahora.getDate() && 
+                  fechaCita.getMonth() === ahora.getMonth() && 
+                  fechaCita.getFullYear() === ahora.getFullYear();
+                  
+    if (esHoy) {
+      return `Hoy ${horaStr}`;
+    } else {
+      return `Mañana ${horaStr}`;
+    }
+  };
+
   const enviarCRM = (tipo, name, phone) => {
     if (!phone || phone === '' || phone === '-') {
       toast.error('Este cliente no cuenta con número telefónico registrado para el CRM.');
@@ -174,12 +202,23 @@ const Clientes = () => {
                   <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="p-4 pl-6 text-xs font-mono font-bold text-gray-500">{c.dni}</td>
                     <td className="p-4 font-bold text-gray-900">
-                      {c.nombre}
-                      {esCumpleanosHoy(c.fechaNacimiento) && (
-                        <span className="ml-2 inline-flex items-center gap-1 bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
-                          🎁 ¡Hoy cumple años!
-                        </span>
-                      )}
+                      <div>
+                        {c.nombre}
+                        {esCumpleanosHoy(c.fechaNacimiento) && (
+                          <span className="ml-2 inline-flex items-center gap-1 bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                            🎁 ¡Hoy cumple años!
+                          </span>
+                        )}
+                      </div>
+                      {(() => {
+                        const aviso = obtenerAvisoCita(c.citas);
+                        if (!aviso) return null;
+                        return (
+                          <span className="mt-1 inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded font-bold animate-pulse">
+                            <i className="fa-regular fa-clock"></i> Recordatorio Cita: {aviso}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="p-4">
                       <p className="text-xs text-gray-600">

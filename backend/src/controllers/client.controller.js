@@ -7,6 +7,20 @@ export const obtenerClientes = async (req, res) => {
   try {
     const clientes = await prisma.cliente.findMany({
       where: { activo: true },
+      include: {
+        citas: {
+          where: {
+            estado: 'Pendiente',
+            fecha: {
+              gte: new Date()
+            }
+          },
+          orderBy: {
+            fecha: 'asc'
+          },
+          take: 1
+        }
+      },
       orderBy: { nombre: 'asc' },
     });
     res.json(clientes);
