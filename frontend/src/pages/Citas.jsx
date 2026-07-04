@@ -382,7 +382,7 @@ const Citas = () => {
                           <label className="block text-[10px] font-bold text-gray-500 uppercase">Insumos Consumidos (Inventario)</label>
                           <button
                             type="button"
-                            onClick={() => setInsumosSeleccionados([...insumosSeleccionados, { productoId: '', cantidad: 1 }])}
+                            onClick={() => setInsumosSeleccionados([...insumosSeleccionados, { productoId: '', cantidad: 1, searchText: '', mostrarSugerenciasProd: false }])}
                             className="text-[10px] text-pink-600 hover:text-pink-700 font-bold flex items-center gap-1 cursor-pointer"
                           >
                             <i className="fa-solid fa-plus text-[8px]"></i> Añadir
@@ -398,26 +398,73 @@ const Citas = () => {
                               const stock = selProd ? (selProd.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0) : 0;
                               return (
                                 <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded-xl border border-gray-100 font-sans">
-                                  <select
-                                    required
-                                    value={ins.productoId}
-                                    onChange={(e) => {
-                                      const newList = [...insumosSeleccionados];
-                                      newList[idx].productoId = e.target.value;
-                                      setInsumosSeleccionados(newList);
-                                    }}
-                                    className="flex-1 px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-pink-400"
-                                  >
-                                    <option value="">-- Insumo --</option>
-                                    {productos.map(p => {
-                                      const pStock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
-                                      return (
-                                        <option key={p.id} value={p.id} disabled={pStock <= 0}>
-                                          {p.nombre} (Stock: {pStock})
-                                        </option>
-                                      );
-                                    })}
-                                  </select>
+                                  <div className="relative flex-1">
+                                    <input
+                                      type="text"
+                                      required
+                                      placeholder="Escribe para buscar..."
+                                      value={ins.searchText || ''}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        const newList = [...insumosSeleccionados];
+                                        newList[idx].searchText = val;
+                                        newList[idx].mostrarSugerenciasProd = true;
+                                        const match = productos.find(p => p.nombre.toLowerCase() === val.toLowerCase());
+                                        newList[idx].productoId = match ? match.id : '';
+                                        setInsumosSeleccionados(newList);
+                                      }}
+                                      onFocus={() => {
+                                        const newList = [...insumosSeleccionados];
+                                        newList[idx].mostrarSugerenciasProd = true;
+                                        setInsumosSeleccionados(newList);
+                                      }}
+                                      onBlur={() => {
+                                        setTimeout(() => {
+                                          const newList = [...insumosSeleccionados];
+                                          if (newList[idx]) {
+                                            newList[idx].mostrarSugerenciasProd = false;
+                                            setInsumosSeleccionados(newList);
+                                          }
+                                        }, 250);
+                                      }}
+                                      className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-pink-400"
+                                    />
+                                    {ins.mostrarSugerenciasProd && (ins.searchText || '').trim() !== '' && (
+                                      (() => {
+                                        const query = ins.searchText.toLowerCase();
+                                        const filtered = productos.filter(p => {
+                                          const pStock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                                          return pStock > 0 && (p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query));
+                                        }).slice(0, 5);
+
+                                        if (filtered.length === 0) return null;
+
+                                        return (
+                                          <ul className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[60] max-h-36 overflow-y-auto divide-y divide-gray-100 font-sans">
+                                            {filtered.map(p => {
+                                              const pStock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                                              return (
+                                                <li
+                                                  key={p.id}
+                                                  onClick={() => {
+                                                    const newList = [...insumosSeleccionados];
+                                                    newList[idx].productoId = p.id;
+                                                    newList[idx].searchText = p.nombre;
+                                                    newList[idx].mostrarSugerenciasProd = false;
+                                                    setInsumosSeleccionados(newList);
+                                                  }}
+                                                  className="px-2 py-1.5 hover:bg-pink-50 hover:text-pink-600 cursor-pointer text-[10px] flex justify-between items-center"
+                                                >
+                                                  <span className="font-semibold">{p.nombre}</span>
+                                                  <span className="text-gray-400 font-mono text-[9px]">Stock: {pStock}</span>
+                                                </li>
+                                              );
+                                            })}
+                                          </ul>
+                                        );
+                                      })()
+                                    )}
+                                  </div>
                                   <input
                                     type="number"
                                     required

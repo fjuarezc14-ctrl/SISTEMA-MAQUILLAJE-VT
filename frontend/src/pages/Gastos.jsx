@@ -17,6 +17,8 @@ const Gastos = () => {
   const [productos, setProductos] = useState([]);
   const [esProductoInventario, setEsProductoInventario] = useState(false);
   const [productoId, setProductoId] = useState('');
+  const [productoSearchText, setProductoSearchText] = useState('');
+  const [mostrarSugerenciasProd, setMostrarSugerenciasProd] = useState(false);
 
   // Stats
   const [bolsasStock, setBolsasStock] = useState('0 unidades');
@@ -74,6 +76,8 @@ const Gastos = () => {
     setCosto('');
     setEsProductoInventario(false);
     setProductoId('');
+    setProductoSearchText('');
+    setMostrarSugerenciasProd(false);
     setShowModal(true);
   };
 
@@ -264,7 +268,15 @@ const Gastos = () => {
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría del Gasto</label>
                 <select
                   value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCategoria(val);
+                    if (val === 'Cortesías al Cliente') {
+                      setEsProductoInventario(true);
+                    } else {
+                      setEsProductoInventario(false);
+                    }
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50 cursor-pointer"
                 >
                   <option value="Publicidad">Publicidad (Tarjetas, folletos, pauta)</option>
@@ -288,7 +300,9 @@ const Gastos = () => {
                       if (val) {
                         setCategoria('Cortesías al Cliente');
                       } else {
-                        setCategoria('Publicidad');
+                        if (categoria === 'Cortesías al Cliente') {
+                          setCategoria('Publicidad');
+                        }
                       }
                     }}
                     className="sr-only peer"
@@ -340,24 +354,61 @@ const Gastos = () => {
                 </>
               ) : (
                 <>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Producto</label>
-                    <select
+                  <div className="relative">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Buscar Producto</label>
+                    <input
+                      type="text"
                       required
-                      value={productoId}
-                      onChange={(e) => setProductoId(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50 cursor-pointer"
-                    >
-                      <option value="">-- Seleccione un Producto --</option>
-                      {productos.map(p => {
-                        const stock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                      placeholder="Escribe el nombre del producto..."
+                      value={productoSearchText}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setProductoSearchText(val);
+                        setMostrarSugerenciasProd(true);
+                        const match = productos.find(p => p.nombre.toLowerCase() === val.toLowerCase());
+                        setProductoId(match ? match.id : '');
+                      }}
+                      onFocus={() => setMostrarSugerenciasProd(true)}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setMostrarSugerenciasProd(false);
+                        }, 250);
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                    />
+                    {mostrarSugerenciasProd && productoSearchText.trim() !== '' && (
+                      (() => {
+                        const query = productoSearchText.toLowerCase();
+                        const filtered = productos.filter(p => {
+                          const stock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                          return stock > 0 && (p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query));
+                        }).slice(0, 5);
+
+                        if (filtered.length === 0) return null;
+
                         return (
-                          <option key={p.id} value={p.id} disabled={stock <= 0}>
-                            {p.nombre} (Stock: {stock} ud)
-                          </option>
+                          <ul className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto divide-y divide-gray-100 font-sans">
+                            {filtered.map(p => {
+                              const stock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                              return (
+                                <li
+                                  key={p.id}
+                                  onClick={() => {
+                                    setProductoId(p.id);
+                                    setProductoSearchText(p.nombre);
+                                    setMostrarSugerenciasProd(false);
+                                  }}
+                                  className="px-4 py-2 hover:bg-pink-50 hover:text-pink-600 cursor-pointer text-xs flex justify-between items-center"
+                                >
+                                  <span className="font-semibold">{p.nombre}</span>
+                                  <span className="text-gray-400 font-mono text-[10px]">Stock: {stock} ud</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
                         );
-                      })}
-                    </select>
+                      })()
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad a Consumir</label>
@@ -376,7 +427,7 @@ const Gastos = () => {
                     if (!selProd) return null;
                     const stock = selProd.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
                     return (
-                      <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
+                      <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-xs text-emerald-700 font-semibold flex items-center gap-1.5 font-sans">
                         <i className="fa-solid fa-circle-info text-emerald-500"></i>
                         <span>Stock disponible: <strong>{stock} unidades</strong>. Costo promedio lote: <strong>{format(selProd.lotes?.[0]?.costo || 0)}</strong></span>
                       </div>

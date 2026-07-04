@@ -146,11 +146,70 @@ export const obtenerFinanzas = async (req, res) => {
       capital += p.precio.toNumber() * stockTotal;
     });
 
+    // 7. Compilar Libro Mayor (Movimientos cronológicos)
+    const allVentas = await prisma.venta.findMany({
+      include: { items: true },
+      orderBy: { fecha: 'desc' }
+    });
+
+    const allGastos = await prisma.gastoInterno.findMany({
+      orderBy: { fechaIngreso: 'desc' }
+    });
+
+    const movimientos = [];
+
+    // Agregar ingresos y costos de ventas
+    allVentas.forEach(v => {
+      // Movimiento de Ingreso
+      const esCita = v.citaId !== null;
+      movimientos.push({
+        id: `ingreso-${v.id}`,
+        fecha: v.fecha,
+        tipo: 'Ingreso',
+        concepto: esCita ? 'Servicio de Cita' : 'Venta POS',
+        detalle: `Cliente: ${v.clienteNombre}`,
+        monto: v.total.toNumber(),
+        metodoPago: v.metodoPago
+      });
+
+      // Movimiento de Egreso: Costo de Ventas (COGS)
+      const costoVentaTotal = v.items.reduce((sum, item) => sum + (item.cantidad * item.costoUnitario.toNumber()), 0);
+      if (costoVentaTotal > 0) {
+        const itemNames = v.items.map(i => `${i.nombreProducto} (x${i.cantidad})`).join(', ');
+        movimientos.push({
+          id: `cogs-${v.id}`,
+          fecha: v.fecha,
+          tipo: 'Egreso',
+          concepto: 'Costo de Ventas (COGS)',
+          detalle: `Valor de stock consumido: ${itemNames}`,
+          monto: costoVentaTotal,
+          metodoPago: '-'
+        });
+      }
+    });
+
+    // Agregar egresos de gastos internos
+    allGastos.forEach(g => {
+      movimientos.push({
+        id: `gasto-${g.id}`,
+        fecha: g.fechaIngreso,
+        tipo: 'Egreso',
+        concepto: `Gasto: ${g.categoria}`,
+        detalle: `${g.item} (Cant: ${g.cantidadInicial})`,
+        monto: g.costoTotal.toNumber(),
+        metodoPago: '-'
+      });
+    });
+
+    // Ordenar movimientos por fecha descendente
+    movimientos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
     res.json({
       ingresos,
       egresos,
       gananciaNeta,
-      capital
+      capital,
+      movimientos
     });
 
   } catch (error) {

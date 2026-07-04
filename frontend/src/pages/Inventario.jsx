@@ -37,7 +37,9 @@ const Inventario = () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/productos');
-      setProductos(res.data);
+      // Filtrar el servicio genérico para que no se muestre en el inventario físico
+      const prodsFiltro = res.data.filter(p => p.codigo !== 'SERV-GENERICO');
+      setProductos(prodsFiltro);
     } catch (err) {
       console.error('Error al obtener productos:', err);
       toast.error('No se pudieron cargar los productos.');

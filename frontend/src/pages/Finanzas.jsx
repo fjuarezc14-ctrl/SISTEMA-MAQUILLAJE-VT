@@ -7,7 +7,8 @@ const Finanzas = () => {
     ingresos: 0,
     egresos: 0,
     gananciaNeta: 0,
-    capital: 0
+    capital: 0,
+    movimientos: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +30,15 @@ const Finanzas = () => {
 
   const format = (val) => {
     return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(val);
+  };
+
+  const formatFecha = (str) => {
+    const d = new Date(str);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const time = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `${day}/${month}/${year} ${time}`;
   };
 
   if (loading) {
@@ -65,13 +75,80 @@ const Finanzas = () => {
           <h4 className="text-lg font-bold flex items-center gap-2">
             <i className="fa-solid fa-circle-info"></i> Valor del Capital Inmovilizado en Inventario
           </h4>
-          <p className="text-xs text-pink-105 max-w-xl mt-1">
+          <p className="text-xs text-pink-100 max-w-xl mt-1">
             Simula el valor total de su mercadería a precio de venta. Se reduce automáticamente al vender.
           </p>
         </div>
         <div className="bg-white/10 px-6 py-4 rounded-xl border border-white/20 text-center w-full md:w-auto shrink-0">
           <span className="text-[10px] uppercase font-bold tracking-widest text-pink-100 block">Capital de Stock</span>
           <span className="text-3xl font-black tracking-tight">{format(data.capital)}</span>
+        </div>
+      </div>
+
+      {/* LIBRO MAYOR / HISTORIAL DE MOVIMIENTOS */}
+      <div className="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div>
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+              <i className="fa-solid fa-file-invoice-dollar mr-1.5 text-pink-500"></i> Historial de Movimientos de Caja y Costos
+            </h3>
+            <p className="text-[10px] text-gray-400 mt-0.5">Auditoría cronológica de ingresos por ventas/servicios y egresos por costos/gastos.</p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          {!data.movimientos || data.movimientos.length === 0 ? (
+            <div className="p-8 text-center text-xs text-gray-400 italic">No se registran movimientos en el sistema aún.</div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-[10px] uppercase font-bold text-gray-500">
+                  <th className="px-6 py-3 font-semibold">Fecha</th>
+                  <th className="px-6 py-3 font-semibold">Tipo</th>
+                  <th className="px-6 py-3 font-semibold">Concepto</th>
+                  <th className="px-6 py-3 font-semibold">Detalle</th>
+                  <th className="px-6 py-3 font-semibold text-right">Monto</th>
+                  <th className="px-6 py-3 font-semibold text-center">Método</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-xs">
+                {data.movimientos.map((mov) => {
+                  const esIngreso = mov.tipo === 'Ingreso';
+                  return (
+                    <tr key={mov.id} className="hover:bg-gray-50/40 transition-colors">
+                      <td className="px-6 py-3.5 text-gray-400 font-mono text-[11px] whitespace-nowrap">
+                        {formatFecha(mov.fecha)}
+                      </td>
+                      <td className="px-6 py-3.5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          esIngreso 
+                            ? 'bg-emerald-50 text-emerald-700' 
+                            : 'bg-rose-50 text-rose-700'
+                        }`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${esIngreso ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                          {mov.tipo}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 font-bold text-gray-700 whitespace-nowrap">
+                        {mov.concepto}
+                      </td>
+                      <td className="px-6 py-3.5 text-gray-500 max-w-xs truncate">
+                        {mov.detalle}
+                      </td>
+                      <td className={`px-6 py-3.5 text-right font-bold font-mono text-[13px] whitespace-nowrap ${
+                        esIngreso ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        {esIngreso ? '+' : '-'} {format(mov.monto)}
+                      </td>
+                      <td className="px-6 py-3.5 text-center text-gray-400 font-semibold font-sans whitespace-nowrap">
+                        {mov.metodoPago}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

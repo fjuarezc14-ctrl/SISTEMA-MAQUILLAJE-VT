@@ -32,7 +32,9 @@ const POS = () => {
   const fetchProductosYStats = async () => {
     try {
       const res = await apiClient.get('/productos');
-      setProductos(res.data);
+      // Filtrar el servicio genérico para que no se muestre en el POS
+      const prodsFiltro = res.data.filter(p => p.codigo !== 'SERV-GENERICO');
+      setProductos(prodsFiltro);
       
       const bolsa = res.data.find(p => p.codigo === 'BOLS-001');
       if (bolsa) {

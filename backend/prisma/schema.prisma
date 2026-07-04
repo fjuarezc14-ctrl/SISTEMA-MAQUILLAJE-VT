@@ -96,6 +96,8 @@ model Venta {
   total         Decimal     @db.Decimal(10, 2)
   puntos        Int         @default(0)
   llevaBolsa    Boolean     @default(false)
+  citaId        Int?        @unique // Relación con Cita
+  cita          Cita?       @relation(fields: [citaId], references: [id], onDelete: SetNull)
 
   items         ItemVenta[]
 }
@@ -129,6 +131,7 @@ model Cita {
   precioServicio    Decimal       @default(0) @db.Decimal(10, 2)
   ingresoRegistrado  Boolean       @default(false)
   insumos           CitaInsumo[]
+  venta             Venta?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }
