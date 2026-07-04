@@ -20,19 +20,97 @@ export const obtenerGastos = async (req, res) => {
 // ── POST /api/gastos (Crear un registro de gasto) ──
 export const crearGasto = async (req, res) => {
   try {
-    const { categoria, item, cantidad, costo } = req.body;
+    const { categoria, item, cantidad, costo, productoId } = req.body;
 
-    if (!categoria || !item || cantidad === undefined || costo === undefined) {
+    if (!categoria || (productoId === undefined && !item) || cantidad === undefined || (productoId === undefined && costo === undefined)) {
       return res.status(400).json({ error: 'Faltan campos obligatorios.' });
     }
 
+    const qty = parseInt(cantidad);
+    if (isNaN(qty) || qty <= 0) {
+      return res.status(400).json({ error: 'La cantidad debe ser mayor a 0.' });
+    }
+
+    let itemFinal = item;
+    let costoTotalFinal = parseFloat(costo);
+    let prodIdParsed = null;
+
+    if (productoId !== undefined && productoId !== null && productoId !== '') {
+      prodIdParsed = parseInt(productoId);
+      if (isNaN(prodIdParsed)) {
+        return res.status(400).json({ error: 'ID de producto inválido.' });
+      }
+
+      // Procesamos descuento de stock y cálculo de costos mediante transacción
+      const resultado = await prisma.$transaction(async (tx) => {
+        const prod = await tx.producto.findUnique({
+          where: { id: prodIdParsed, activo: true },
+          include: { lotes: true }
+        });
+
+        if (!prod) {
+          throw new Error('Producto no encontrado en el inventario.');
+        }
+
+        const stockTotal = prod.lotes.reduce((sum, l) => sum + l.stockActual, 0);
+        if (qty > stockTotal) {
+          throw new Error(`Stock insuficiente. Solo hay ${stockTotal} unidades disponibles.`);
+        }
+
+        let unidadesRequeridas = qty;
+        let costoTotalCalculado = 0;
+
+        // FIFO: Ordenar lotes por fecha de creación ascendente
+        const lotesOrdenados = [...prod.lotes].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+        for (const lote of lotesOrdenados) {
+          if (unidadesRequeridas <= 0) break;
+          if (lote.stockActual <= 0) continue;
+
+          const unidadesADescontar = Math.min(lote.stockActual, unidadesRequeridas);
+          lote.stockActual -= unidadesADescontar;
+          unidadesRequeridas -= unidadesADescontar;
+          costoTotalCalculado += unidadesADescontar * lote.costo.toNumber();
+
+          // Actualizar el lote en la DB
+          await tx.lote.update({
+            where: { id: lote.id },
+            data: { stockActual: lote.stockActual }
+          });
+        }
+
+        // Crear registro de GastoInterno
+        const nuevoGasto = await tx.gastoInterno.create({
+          data: {
+            categoria,
+            item: `[Inventario] ${prod.nombre}`,
+            cantidadInicial: qty,
+            cantidadActual: 0,
+            costoTotal: costoTotalCalculado,
+            fechaIngreso: new Date(),
+            fechaFin: new Date(),
+            diasDuracion: 0,
+            productoId: prodIdParsed
+          }
+        });
+
+        return nuevoGasto;
+      });
+
+      return res.status(201).json({
+        mensaje: 'Gasto de inventario registrado y stock descontado exitosamente.',
+        gasto: resultado
+      });
+    }
+
+    // Flujo normal (gasto manual)
     const nuevoGasto = await prisma.gastoInterno.create({
       data: {
         categoria,
-        item,
-        cantidadInicial: parseInt(cantidad),
-        cantidadActual: parseInt(cantidad),
-        costoTotal: parseFloat(costo),
+        item: itemFinal,
+        cantidadInicial: qty,
+        cantidadActual: qty,
+        costoTotal: costoTotalFinal,
         fechaIngreso: new Date()
       }
     });
@@ -43,7 +121,7 @@ export const crearGasto = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al registrar gasto:', error);
-    res.status(500).json({ error: 'Error al registrar el gasto.' });
+    res.status(400).json({ error: error.message || 'Error al registrar el gasto.' });
   }
 };
 

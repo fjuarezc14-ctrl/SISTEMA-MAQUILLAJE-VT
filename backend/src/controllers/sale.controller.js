@@ -111,7 +111,7 @@ export const crearVenta = async (req, res) => {
 
         if (dbCliente) {
           // Si el cliente ya existe, acumulamos su total de compra e incrementamos puntos
-          const nuevosPuntos = Math.floor(totalVenta / 100);
+          const nuevosPuntos = Math.floor(totalVenta / 10);
           dbCliente = await tx.cliente.update({
             where: { id: dbCliente.id },
             data: {
@@ -124,7 +124,7 @@ export const crearVenta = async (req, res) => {
           finalClienteNombre = dbCliente.nombre;
         } else if (clienteNombre) {
           // Si no existe pero se proporcionaron datos, lo creamos
-          const nuevosPuntos = Math.floor(totalVenta / 100);
+          const nuevosPuntos = Math.floor(totalVenta / 10);
           dbCliente = await tx.cliente.create({
             data: {
               dni: clienteDni,
@@ -146,7 +146,7 @@ export const crearVenta = async (req, res) => {
           clienteId: dbCliente ? dbCliente.id : null,
           metodoPago,
           total: totalVenta,
-          puntos: Math.floor(totalVenta / 100),
+          puntos: Math.floor(totalVenta / 10),
           llevaBolsa: !!statusBolsa,
           items: {
             create: itemsVentaData

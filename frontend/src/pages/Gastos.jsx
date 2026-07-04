@@ -13,6 +13,11 @@ const Gastos = () => {
   const [cantidad, setCantidad] = useState('');
   const [costo, setCosto] = useState('');
 
+  // Inventory consumption states
+  const [productos, setProductos] = useState([]);
+  const [esProductoInventario, setEsProductoInventario] = useState(false);
+  const [productoId, setProductoId] = useState('');
+
   // Stats
   const [bolsasStock, setBolsasStock] = useState('0 unidades');
   const [bolsasInversion, setBolsasInversion] = useState(0);
@@ -27,6 +32,7 @@ const Gastos = () => {
       ]);
 
       setGastos(resGastos.data);
+      setProductos(resProductos.data);
 
       // Calcular estadísticas de bolsas de regalo (BOLS-001)
       const bolsaProd = resProductos.data.find(p => p.codigo === 'BOLS-001');
@@ -66,19 +72,23 @@ const Gastos = () => {
     setItem('');
     setCantidad('');
     setCosto('');
+    setEsProductoInventario(false);
+    setProductoId('');
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiClient.post('/gastos', {
+      const payload = {
         categoria,
-        item,
-        cantidad,
-        costo
-      });
-      toast.success('Gasto registrado exitosamente.');
+        cantidad: parseInt(cantidad),
+        ...(esProductoInventario 
+          ? { productoId: parseInt(productoId) } 
+          : { item, costo: parseFloat(costo) })
+      };
+      const res = await apiClient.post('/gastos', payload);
+      toast.success(res.data.mensaje || 'Gasto registrado exitosamente.');
       setShowModal(false);
       fetchGastosYProductos();
     } catch (err) {
@@ -263,44 +273,117 @@ const Gastos = () => {
                   <option value="Otros Gastos">Otros Gastos</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Item / Insumo</label>
-                <input
-                  type="text"
-                  required
-                  value={item}
-                  onChange={(e) => setItem(e.target.value)}
-                  placeholder="Ej. Tarjetas de publicidad de mano"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between bg-pink-50/40 border border-pink-100/50 p-3 rounded-xl">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Adquirida</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={cantidad}
-                    onChange={(e) => setCantidad(e.target.value)}
-                    placeholder="Ej. 100"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
-                  />
+                  <span className="text-xs font-bold text-gray-700 block">¿Consumo de Inventario?</span>
+                  <span className="text-[10px] text-gray-400">Extraer producto registrado en stock</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Costo Total de Compra (S/)</label>
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0.1"
-                    value={costo}
-                    onChange={(e) => setCosto(e.target.value)}
-                    placeholder="Ej. 50.00"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                    type="checkbox"
+                    checked={esProductoInventario}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setEsProductoInventario(val);
+                      if (val) {
+                        setCategoria('Cortesías al Cliente');
+                      } else {
+                        setCategoria('Publicidad');
+                      }
+                    }}
+                    className="sr-only peer"
                   />
-                </div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                </label>
               </div>
+
+              {!esProductoInventario ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Item / Insumo</label>
+                    <input
+                      type="text"
+                      required
+                      value={item}
+                      onChange={(e) => setItem(e.target.value)}
+                      placeholder="Ej. Tarjetas de publicidad de mano"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Adquirida</label>
+                      <input
+                        type="number"
+                        required
+                        min="1"
+                        value={cantidad}
+                        onChange={(e) => setCantidad(e.target.value)}
+                        placeholder="Ej. 100"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Costo Total de Compra (S/)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        min="0.1"
+                        value={costo}
+                        onChange={(e) => setCosto(e.target.value)}
+                        placeholder="Ej. 50.00"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Producto</label>
+                    <select
+                      required
+                      value={productoId}
+                      onChange={(e) => setProductoId(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50 cursor-pointer"
+                    >
+                      <option value="">-- Seleccione un Producto --</option>
+                      {productos.map(p => {
+                        const stock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                        return (
+                          <option key={p.id} value={p.id} disabled={stock <= 0}>
+                            {p.nombre} (Stock: {stock} ud)
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad a Consumir</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={cantidad}
+                      onChange={(e) => setCantidad(e.target.value)}
+                      placeholder="Ej. 2"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                    />
+                  </div>
+                  {(() => {
+                    const selProd = productos.find(p => p.id === parseInt(productoId));
+                    if (!selProd) return null;
+                    const stock = selProd.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                    return (
+                      <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
+                        <i className="fa-solid fa-circle-info text-emerald-500"></i>
+                        <span>Stock disponible: <strong>{stock} unidades</strong>. Costo promedio lote: <strong>{format(selProd.lotes?.[0]?.costo || 0)}</strong></span>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
               <button
                 type="submit"
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition-all shadow-md shadow-pink-200 mt-4 cursor-pointer"

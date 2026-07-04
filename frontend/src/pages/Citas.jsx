@@ -22,6 +22,12 @@ const Citas = () => {
   const [clientes, setClientes] = useState([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
+  // Financial and Insumos states
+  const [productos, setProductos] = useState([]);
+  const [precioServicio, setPrecioServicio] = useState('');
+  const [metodoPago, setMetodoPago] = useState('Efectivo');
+  const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
+
   const fetchCitas = async () => {
     setLoading(true);
     try {
@@ -44,9 +50,19 @@ const Citas = () => {
     }
   };
 
+  const fetchProductos = async () => {
+    try {
+      const res = await apiClient.get('/productos');
+      setProductos(res.data);
+    } catch (err) {
+      console.error('Error al obtener productos:', err);
+    }
+  };
+
   useEffect(() => {
     fetchCitas();
     fetchClientes();
+    fetchProductos();
   }, []);
 
   const openAddModal = () => {
@@ -64,6 +80,9 @@ const Citas = () => {
     setServicio('');
     setEstado('Pendiente');
     setNotas('');
+    setPrecioServicio('');
+    setMetodoPago('Efectivo');
+    setInsumosSeleccionados([]);
     setShowModal(true);
   };
 
@@ -75,13 +94,28 @@ const Citas = () => {
     setServicio(cita.servicio);
     setEstado(cita.estado);
     setNotas(cita.notas || '');
+    setPrecioServicio(cita.precioServicio || '');
+    setMetodoPago(cita.metodoPago || 'Efectivo');
+    setInsumosSeleccionados([]);
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { fecha, hora, clienteNombre, servicio, estado, notas };
+      const payload = { 
+        fecha, 
+        hora, 
+        clienteNombre, 
+        servicio, 
+        estado, 
+        notas,
+        ...(estado === 'Completado' && !selectedCita?.ingresoRegistrado && {
+          precioServicio: parseFloat(precioServicio || 0),
+          metodoPago,
+          insumos: insumosSeleccionados.filter(ins => ins.productoId !== '')
+        })
+      };
       if (selectedCita) {
         await apiClient.put(`/citas/${selectedCita.id}`, payload);
         toast.success('Cita actualizada exitosamente.');
@@ -91,6 +125,7 @@ const Citas = () => {
       }
       setShowModal(false);
       fetchCitas();
+      fetchClientes();
     } catch (err) {
       console.error('Error al guardar cita:', err);
       toast.error(err.response?.data?.error || 'Error al guardar la cita.');
@@ -296,6 +331,126 @@ const Citas = () => {
                   <option value="Cancelado">Cancelado</option>
                 </select>
               </div>
+
+              {estado === 'Completado' && (
+                <div className="bg-pink-50/30 border border-pink-100 p-4 rounded-2xl space-y-3 mt-2">
+                  <h4 className="text-xs font-bold text-pink-700 uppercase tracking-wider mb-1">
+                    <i className="fa-solid fa-cash-register mr-1"></i> Conciliación de Servicio y Caja
+                  </h4>
+                  
+                  {selectedCita?.ingresoRegistrado ? (
+                    <div className="text-xs text-gray-600 space-y-1 bg-white p-3 rounded-xl border border-gray-100 font-sans">
+                      <p>✨ <strong>Ingreso ya registrado:</strong></p>
+                      <div>💰 <strong>Mano de Obra:</strong> {new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(selectedCita.precioServicio || 0)}</div>
+                      <div>💳 <strong>Método de Pago:</strong> {selectedCita.metodoPago || 'Efectivo'}</div>
+                      <p className="text-[10px] text-gray-400 italic mt-1 font-sans">Los datos financieros y el descuento de stock de esta cita no se pueden modificar.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Mano de Obra (S/)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            required
+                            min="0"
+                            value={precioServicio}
+                            onChange={(e) => setPrecioServicio(e.target.value)}
+                            placeholder="Ej. 150.00"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Método de Pago</label>
+                          <select
+                            value={metodoPago}
+                            onChange={(e) => setMetodoPago(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer"
+                          >
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Yape">Yape</option>
+                            <option value="Plin">Plin</option>
+                            <option value="Transferencia">Transferencia</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Sección de Insumos */}
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase">Insumos Consumidos (Inventario)</label>
+                          <button
+                            type="button"
+                            onClick={() => setInsumosSeleccionados([...insumosSeleccionados, { productoId: '', cantidad: 1 }])}
+                            className="text-[10px] text-pink-600 hover:text-pink-700 font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <i className="fa-solid fa-plus text-[8px]"></i> Añadir
+                          </button>
+                        </div>
+
+                        {insumosSeleccionados.length === 0 ? (
+                          <p className="text-[10px] text-gray-400 italic">No se agregaron productos de inventario a esta sesión.</p>
+                        ) : (
+                          <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                            {insumosSeleccionados.map((ins, idx) => {
+                              const selProd = productos.find(p => p.id === parseInt(ins.productoId));
+                              const stock = selProd ? (selProd.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0) : 0;
+                              return (
+                                <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded-xl border border-gray-100 font-sans">
+                                  <select
+                                    required
+                                    value={ins.productoId}
+                                    onChange={(e) => {
+                                      const newList = [...insumosSeleccionados];
+                                      newList[idx].productoId = e.target.value;
+                                      setInsumosSeleccionados(newList);
+                                    }}
+                                    className="flex-1 px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-pink-400"
+                                  >
+                                    <option value="">-- Insumo --</option>
+                                    {productos.map(p => {
+                                      const pStock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
+                                      return (
+                                        <option key={p.id} value={p.id} disabled={pStock <= 0}>
+                                          {p.nombre} (Stock: {pStock})
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                  <input
+                                    type="number"
+                                    required
+                                    min="1"
+                                    max={stock || 999}
+                                    value={ins.cantidad}
+                                    onChange={(e) => {
+                                      const newList = [...insumosSeleccionados];
+                                      newList[idx].cantidad = e.target.value;
+                                      setInsumosSeleccionados(newList);
+                                    }}
+                                    className="w-14 px-2 py-1 rounded-lg border border-gray-200 text-xs text-center focus:outline-none focus:border-pink-400 font-mono"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newList = insumosSeleccionados.filter((_, i) => i !== idx);
+                                      setInsumosSeleccionados(newList);
+                                    }}
+                                    className="text-gray-400 hover:text-rose-500 cursor-pointer p-1"
+                                  >
+                                    <i className="fa-solid fa-trash-can text-[10px]"></i>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Notas (Opcional)</label>
                 <textarea
