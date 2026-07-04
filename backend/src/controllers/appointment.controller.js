@@ -7,8 +7,7 @@ export const obtenerCitas = async (req, res) => {
   try {
     const citas = await prisma.cita.findMany({
       orderBy: [
-        { fecha: 'asc' },
-        { hora: 'asc' }
+        { fecha: 'asc' }
       ]
     });
     

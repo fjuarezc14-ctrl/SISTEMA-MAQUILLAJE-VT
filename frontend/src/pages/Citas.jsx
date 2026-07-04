@@ -18,6 +18,10 @@ const Citas = () => {
   const [estado, setEstado] = useState('Pendiente');
   const [notas, setNotas] = useState('');
 
+  // Autocomplete states
+  const [clientes, setClientes] = useState([]);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+
   const fetchCitas = async () => {
     setLoading(true);
     try {
@@ -31,8 +35,18 @@ const Citas = () => {
     }
   };
 
+  const fetchClientes = async () => {
+    try {
+      const res = await apiClient.get('/clientes');
+      setClientes(res.data);
+    } catch (err) {
+      console.error('Error al obtener clientes:', err);
+    }
+  };
+
   useEffect(() => {
     fetchCitas();
+    fetchClientes();
   }, []);
 
   const openAddModal = () => {
@@ -215,16 +229,49 @@ const Citas = () => {
                   />
                 </div>
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre del Cliente</label>
                 <input
                   type="text"
                   required
                   value={clienteNombre}
-                  onChange={(e) => setClienteNombre(e.target.value)}
-                  placeholder="Ej. Camila Rodríguez"
+                  onChange={(e) => {
+                    setClienteNombre(e.target.value);
+                    setMostrarSugerencias(true);
+                  }}
+                  onFocus={() => setMostrarSugerencias(true)}
+                  onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)}
+                  placeholder="Ej. Camila Rodríguez o DNI"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
                 />
+                {mostrarSugerencias && clienteNombre.trim() && (
+                  (() => {
+                    const filtered = clientes.filter(c => 
+                      c.nombre.toLowerCase().includes(clienteNombre.toLowerCase()) ||
+                      c.dni.includes(clienteNombre)
+                    ).slice(0, 5);
+
+                    if (filtered.length === 0) return null;
+
+                    return (
+                      <ul className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto divide-y divide-gray-100">
+                        {filtered.map(c => (
+                          <li 
+                            key={c.id} 
+                            onClick={() => {
+                              setClienteNombre(c.nombre);
+                              setMostrarSugerencias(false);
+                            }}
+                            className="px-4 py-2 hover:bg-pink-50 hover:text-pink-600 cursor-pointer text-xs flex justify-between items-center"
+                          >
+                            <span className="font-semibold">{c.nombre}</span>
+                            <span className="text-gray-400 font-mono text-[10px]">DNI: {c.dni}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()
+                )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Servicio / Descripción</label>
