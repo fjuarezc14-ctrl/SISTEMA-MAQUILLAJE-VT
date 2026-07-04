@@ -75,7 +75,7 @@ export const crearCliente = async (req, res) => {
 export const actualizarCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    const { dni, nombre, telefono, correo } = req.body;
+    const { dni, nombre, telefono, correo, fechaNacimiento } = req.body;
 
     const clienteId = parseInt(id);
     if (isNaN(clienteId)) {

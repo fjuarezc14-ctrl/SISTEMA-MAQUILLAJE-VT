@@ -173,6 +173,38 @@ const Inventario = () => {
     return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(val);
   };
 
+  const renderLotesPrecios = (lotes) => {
+    if (!lotes || lotes.length === 0) return <span className="text-gray-400">Sin lotes</span>;
+
+    const activos = lotes.filter(l => l.stockActual > 0);
+    const agotados = lotes.filter(l => l.stockActual === 0)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return (
+      <div className="font-mono text-xs my-0.5 space-y-0.5">
+        {/* Lotes activos */}
+        {activos.map(l => (
+          <div key={l.id} className="text-gray-700 font-medium">
+            {format(l.costo)} <span className="text-gray-400 font-normal">(x{l.stockActual})</span>
+          </div>
+        ))}
+        {/* Último lote agotado (en gris y tachado) */}
+        {agotados.length > 0 && (
+          <div className="text-gray-400 line-through flex items-center gap-1.5" title="Último lote agotado">
+            <span>{format(agotados[0].costo)} (x0)</span>
+            <span className="text-[9px] font-sans px-1 rounded bg-gray-100 text-gray-500 font-bold uppercase tracking-tight no-underline inline-block">Agotado</span>
+          </div>
+        ))}
+        {/* Contador de otros lotes agotados anteriores */}
+        {agotados.length > 1 && (
+          <div className="text-[10px] text-gray-400 italic font-sans pt-0.5" title={agotados.slice(1).map(l => `${format(l.costo)} (x0)`).join(', ')}>
+            + {agotados.length - 1} lote(s) anterior(es)
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -229,14 +261,8 @@ const Inventario = () => {
                       <td className="p-4 text-xs font-medium text-gray-500">{p.categoria}</td>
                       <td className="p-4 text-xs">
                         <div className="font-bold text-emerald-600 mb-1">P. Venta: {format(p.precio)}</div>
-                        <span className="text-gray-400">Lotes Costo:</span>
-                        <div className="font-mono text-gray-500 font-normal">
-                          {p.lotes?.map((l) => (
-                            <div key={l.id}>
-                              {format(l.costo)} (x{l.stockActual})
-                            </div>
-                          ))}
-                        </div>
+                        <span className="text-gray-400 block mb-0.5">Lotes Costo:</span>
+                        {renderLotesPrecios(p.lotes)}
                       </td>
                       <td className="p-4 text-center font-bold text-base text-gray-900">{p.stock}</td>
                       <td className="p-4 text-xs font-medium text-gray-500">
