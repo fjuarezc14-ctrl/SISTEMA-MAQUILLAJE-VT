@@ -194,13 +194,13 @@ const Inventario = () => {
             <span>{format(agotados[0].costo)} (x0)</span>
             <span className="text-[9px] font-sans px-1 rounded bg-gray-100 text-gray-500 font-bold uppercase tracking-tight no-underline inline-block">Agotado</span>
           </div>
-        ))}
+        )}
         {/* Contador de otros lotes agotados anteriores */}
         {agotados.length > 1 && (
           <div className="text-[10px] text-gray-400 italic font-sans pt-0.5" title={agotados.slice(1).map(l => `${format(l.costo)} (x0)`).join(', ')}>
             + {agotados.length - 1} lote(s) anterior(es)
           </div>
-        ))}
+        )}
       </div>
     );
   };
