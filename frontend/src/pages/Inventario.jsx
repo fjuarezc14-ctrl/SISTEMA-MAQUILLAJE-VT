@@ -27,6 +27,9 @@ const Inventario = () => {
   const [lotCosto, setLotCosto] = useState('');
   const [lotStock, setLotStock] = useState('');
 
+  // Expandable lots state
+  const [expandedProductLots, setExpandedProductLots] = useState(new Set());
+
   // Derived categories
   const categoriesList = Array.from(new Set(productos.map(p => p.categoria)));
 
@@ -173,12 +176,14 @@ const Inventario = () => {
     return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(val);
   };
 
-  const renderLotesPrecios = (lotes) => {
+  const renderLotesPrecios = (lotes, productId) => {
     if (!lotes || lotes.length === 0) return <span className="text-gray-400">Sin lotes</span>;
 
     const activos = lotes.filter(l => l.stockActual > 0);
     const agotados = lotes.filter(l => l.stockActual === 0)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const isExpanded = expandedProductLots.has(productId);
 
     return (
       <div className="font-mono text-xs my-0.5 space-y-0.5">
@@ -192,17 +197,43 @@ const Inventario = () => {
         {agotados.length > 0 && (
           <div className="text-gray-400 line-through flex items-center gap-1.5" title="Último lote agotado">
             <span>{format(agotados[0].costo)} (x0)</span>
-            <span className="text-[9px] font-sans px-1 rounded bg-gray-100 text-gray-500 font-bold uppercase tracking-tight no-underline inline-block">Agotado</span>
+            <span className="text-[9px] font-sans px-1 rounded bg-gray-100 text-gray-500 font-bold uppercase tracking-tight no-underline inline-block font-bold">Agotado</span>
           </div>
         )}
-        {/* Contador de otros lotes agotados anteriores */}
-        {agotados.length > 1 && (
-          <div className="text-[10px] text-gray-400 italic font-sans pt-0.5" title={agotados.slice(1).map(l => `${format(l.costo)} (x0)`).join(', ')}>
-            + {agotados.length - 1} lote(s) anterior(es)
+        {/* Lotes agotados anteriores (expandibles) */}
+        {isExpanded && agotados.slice(1).map(l => (
+          <div key={l.id} className="text-gray-400/80 line-through flex items-center gap-1.5" title="Lote agotado anterior">
+            <span>{format(l.costo)} (x0)</span>
           </div>
+        ))}
+        {/* Botón para expandir/colapsar */}
+        {agotados.length > 1 && (
+          <button
+            type="button"
+            onClick={() => toggleExpandLots(productId)}
+            className="text-[10px] text-pink-500 hover:text-pink-600 font-sans font-bold hover:underline cursor-pointer block mt-1 pt-0.5 focus:outline-none"
+          >
+            {isExpanded ? (
+              <span><i className="fa-solid fa-chevron-up mr-1 text-[8px]"></i> Ocultar lotes</span>
+            ) : (
+              <span><i className="fa-solid fa-chevron-down mr-1 text-[8px]"></i> + {agotados.length - 1} lote(s) anterior(es)</span>
+            )}
+          </button>
         )}
       </div>
     );
+  };
+
+  const toggleExpandLots = (productId) => {
+    setExpandedProductLots(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
   };
 
   return (
@@ -262,7 +293,7 @@ const Inventario = () => {
                       <td className="p-4 text-xs">
                         <div className="font-bold text-emerald-600 mb-1">P. Venta: {format(p.precio)}</div>
                         <span className="text-gray-400 block mb-0.5">Lotes Costo:</span>
-                        {renderLotesPrecios(p.lotes)}
+                        {renderLotesPrecios(p.lotes, p.id)}
                       </td>
                       <td className="p-4 text-center font-bold text-base text-gray-900">{p.stock}</td>
                       <td className="p-4 text-xs font-medium text-gray-500">
