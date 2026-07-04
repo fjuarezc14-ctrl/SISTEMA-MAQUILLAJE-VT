@@ -359,7 +359,7 @@ const Gastos = () => {
                     <input
                       type="text"
                       required
-                      placeholder="Escribe el nombre del producto..."
+                      placeholder="Haz clic para ver todos o escribe..."
                       value={productoSearchText}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -374,15 +374,17 @@ const Gastos = () => {
                           setMostrarSugerenciasProd(false);
                         }, 250);
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50 cursor-pointer"
                     />
-                    {mostrarSugerenciasProd && productoSearchText.trim() !== '' && (
+                    {mostrarSugerenciasProd && (
                       (() => {
-                        const query = productoSearchText.toLowerCase();
+                        const query = (productoSearchText || '').toLowerCase().trim();
                         const filtered = productos.filter(p => {
                           const stock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
-                          return stock > 0 && (p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query));
-                        }).slice(0, 5);
+                          if (stock <= 0) return false;
+                          if (query === '') return true;
+                          return p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query);
+                        });
 
                         if (filtered.length === 0) return null;
 
@@ -400,8 +402,8 @@ const Gastos = () => {
                                   }}
                                   className="px-4 py-2 hover:bg-pink-50 hover:text-pink-600 cursor-pointer text-xs flex justify-between items-center"
                                 >
-                                  <span className="font-semibold">{p.nombre}</span>
-                                  <span className="text-gray-400 font-mono text-[10px]">Stock: {stock} ud</span>
+                                  <span className="font-semibold text-left">{p.nombre}</span>
+                                  <span className="text-gray-400 font-mono text-[10px] shrink-0 font-semibold">Stock: {stock} ud</span>
                                 </li>
                               );
                             })}

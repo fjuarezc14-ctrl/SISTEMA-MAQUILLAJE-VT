@@ -392,7 +392,7 @@ const Citas = () => {
                         {insumosSeleccionados.length === 0 ? (
                           <p className="text-[10px] text-gray-400 italic">No se agregaron productos de inventario a esta sesión.</p>
                         ) : (
-                          <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                          <div className="space-y-2 pr-1">
                             {insumosSeleccionados.map((ins, idx) => {
                               const selProd = productos.find(p => p.id === parseInt(ins.productoId));
                               const stock = selProd ? (selProd.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0) : 0;
@@ -402,7 +402,7 @@ const Citas = () => {
                                     <input
                                       type="text"
                                       required
-                                      placeholder="Escribe para buscar..."
+                                      placeholder="Haz clic para ver todos o escribe..."
                                       value={ins.searchText || ''}
                                       onChange={(e) => {
                                         const val = e.target.value;
@@ -427,20 +427,22 @@ const Citas = () => {
                                           }
                                         }, 250);
                                       }}
-                                      className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-pink-400"
+                                      className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-pink-400 cursor-pointer"
                                     />
-                                    {ins.mostrarSugerenciasProd && (ins.searchText || '').trim() !== '' && (
+                                    {ins.mostrarSugerenciasProd && (
                                       (() => {
-                                        const query = ins.searchText.toLowerCase();
+                                        const query = (ins.searchText || '').toLowerCase().trim();
                                         const filtered = productos.filter(p => {
                                           const pStock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
-                                          return pStock > 0 && (p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query));
-                                        }).slice(0, 5);
+                                          if (pStock <= 0) return false;
+                                          if (query === '') return true;
+                                          return p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query);
+                                        });
 
                                         if (filtered.length === 0) return null;
 
                                         return (
-                                          <ul className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[60] max-h-36 overflow-y-auto divide-y divide-gray-100 font-sans">
+                                          <ul className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[99] max-h-36 overflow-y-auto divide-y divide-gray-100 font-sans">
                                             {filtered.map(p => {
                                               const pStock = p.lotes?.reduce((sum, l) => sum + l.stockActual, 0) || 0;
                                               return (
@@ -455,8 +457,8 @@ const Citas = () => {
                                                   }}
                                                   className="px-2 py-1.5 hover:bg-pink-50 hover:text-pink-600 cursor-pointer text-[10px] flex justify-between items-center"
                                                 >
-                                                  <span className="font-semibold">{p.nombre}</span>
-                                                  <span className="text-gray-400 font-mono text-[9px]">Stock: {pStock}</span>
+                                                  <span className="font-semibold text-left">{p.nombre}</span>
+                                                  <span className="text-gray-400 font-mono text-[9px] shrink-0">Stock: {pStock}</span>
                                                 </li>
                                               );
                                             })}
