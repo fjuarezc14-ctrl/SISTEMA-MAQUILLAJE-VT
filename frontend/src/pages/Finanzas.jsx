@@ -11,6 +11,8 @@ const Finanzas = () => {
     movimientos: []
   });
   const [loading, setLoading] = useState(true);
+  const [filtroTipo, setFiltroTipo] = useState('Todos');
+  const [filtroBusqueda, setFiltroBusqueda] = useState('');
 
   useEffect(() => {
     const fetchFinanceData = async () => {
@@ -40,6 +42,18 @@ const Finanzas = () => {
     const time = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
     return `${day}/${month}/${year} ${time}`;
   };
+
+  const filteredMovimientos = (data.movimientos || []).filter((m) => {
+    if (filtroTipo !== 'Todos' && m.tipo !== filtroTipo) return false;
+    if (filtroBusqueda.trim() !== '') {
+      const q = filtroBusqueda.toLowerCase();
+      const matchConcepto = m.concepto.toLowerCase().includes(q);
+      const matchDetalle = (m.detalle || '').toLowerCase().includes(q);
+      const matchMetodo = (m.metodoPago || '').toLowerCase().includes(q);
+      return matchConcepto || matchDetalle || matchMetodo;
+    }
+    return true;
+  });
 
   if (loading) {
     return (
@@ -75,7 +89,7 @@ const Finanzas = () => {
           <h4 className="text-lg font-bold flex items-center gap-2">
             <i className="fa-solid fa-circle-info"></i> Valor del Capital Inmovilizado en Inventario
           </h4>
-          <p className="text-xs text-pink-100 max-w-xl mt-1">
+          <p className="text-xs text-pink-105 max-w-xl mt-1">
             Simula el valor total de su mercadería a precio de venta. Se reduce automáticamente al vender.
           </p>
         </div>
@@ -87,18 +101,55 @@ const Finanzas = () => {
 
       {/* LIBRO MAYOR / HISTORIAL DE MOVIMIENTOS */}
       <div className="bg-white rounded-2xl border border-pink-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div className="px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50">
           <div>
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
               <i className="fa-solid fa-file-invoice-dollar mr-1.5 text-pink-500"></i> Historial de Movimientos de Caja y Costos
             </h3>
             <p className="text-[10px] text-gray-400 mt-0.5">Auditoría cronológica de ingresos por ventas/servicios y egresos por costos/gastos.</p>
           </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Filtro de Tipo */}
+            <select
+              value={filtroTipo}
+              onChange={(e) => setFiltroTipo(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer"
+            >
+              <option value="Todos">Todos los tipos</option>
+              <option value="Ingreso">Ingresos</option>
+              <option value="Egreso">Egresos</option>
+            </select>
+            
+            {/* Buscador de Texto */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar por concepto o cliente..."
+                value={filtroBusqueda}
+                onChange={(e) => setFiltroBusqueda(e.target.value)}
+                className="pl-8 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white w-48 md:w-56"
+              />
+              <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-[10px]"></i>
+              {filtroBusqueda && (
+                <button
+                  onClick={() => setFiltroBusqueda('')}
+                  className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 text-xs cursor-pointer"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
-          {!data.movimientos || data.movimientos.length === 0 ? (
-            <div className="p-8 text-center text-xs text-gray-400 italic">No se registran movimientos en el sistema aún.</div>
+          {filteredMovimientos.length === 0 ? (
+            <div className="p-8 text-center text-xs text-gray-400 italic">
+              {data.movimientos.length === 0 
+                ? "No se registran movimientos en el sistema aún."
+                : "No se encontraron movimientos que coincidan con los filtros aplicados."}
+            </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -112,7 +163,7 @@ const Finanzas = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-xs">
-                {data.movimientos.map((mov) => {
+                {filteredMovimientos.map((mov) => {
                   const esIngreso = mov.tipo === 'Ingreso';
                   return (
                     <tr key={mov.id} className="hover:bg-gray-50/40 transition-colors">
