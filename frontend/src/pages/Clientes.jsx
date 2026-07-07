@@ -6,6 +6,8 @@ const Clientes = () => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('nombre'); // 'nombre', 'puntos', 'totalComprado'
+  const [filterPuntos, setFilterPuntos] = useState('todos'); // 'todos', 'conPuntos'
 
   // Modal
   const [showModal, setShowModal] = useState(false);
@@ -142,35 +144,93 @@ const Clientes = () => {
     window.open(url, '_blank');
   };
 
-  const filteredClientes = clientes.filter(
-    (c) =>
-      c.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      c.dni.includes(search)
-  );
+  const filteredClientes = clientes
+    .filter(
+      (c) =>
+        c.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        c.dni.includes(search)
+    )
+    .filter((c) => {
+      if (filterPuntos === 'conPuntos') {
+        return c.puntosFidelidad > 0;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'puntos') {
+        return b.puntosFidelidad - a.puntosFidelidad;
+      }
+      if (sortBy === 'totalComprado') {
+        return parseFloat(b.totalComprado) - parseFloat(a.totalComprado);
+      }
+      return a.nombre.localeCompare(b.nombre);
+    });
 
   const format = (val) => {
     return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(val);
   };
 
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [clienteSeleccionadoPuntos, setClienteSeleccionadoPuntos] = useState(null);
+
+  const abrirHistorialPuntos = (cliente) => {
+    setClienteSeleccionadoPuntos(cliente);
+    setShowHistoryModal(true);
+  };
+
+  const formatFecha = (str) => {
+    const d = new Date(str);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const time = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `${day}/${month}/${year} ${time}`;
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 animate-fadeIn">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative flex-1 w-full sm:max-w-xs">
+      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-2xl border border-pink-100/60 shadow-sm">
+        <div className="relative flex-1 w-full md:max-w-xs">
           <i className="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre o DNI..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
           />
         </div>
-        <button
-          onClick={openAddModal}
-          className="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm shadow-pink-200"
-        >
-          <i className="fa-solid fa-user-plus"></i> Agregar Cliente
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight font-sans">Puntos:</span>
+            <select
+              value={filterPuntos}
+              onChange={(e) => setFilterPuntos(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer font-sans"
+            >
+              <option value="todos">Todos los Clientes</option>
+              <option value="conPuntos">Solo con Puntos</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight font-sans">Ordenar:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer font-sans"
+            >
+              <option value="nombre">Nombre (A-Z)</option>
+              <option value="puntos">Puntos (Mayor a Menor) ⭐</option>
+              <option value="totalComprado">Total Comprado (Mayor a Menor) 💰</option>
+            </select>
+          </div>
+          <button
+            onClick={openAddModal}
+            className="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm shadow-pink-200 ml-auto md:ml-2"
+          >
+            <i className="fa-solid fa-user-plus"></i> Agregar Cliente
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -186,6 +246,7 @@ const Clientes = () => {
                 <th className="p-4">Nombre Completo</th>
                 <th className="p-4">Contacto</th>
                 <th className="p-4 text-center">Fidelización CRM (WhatsApp)</th>
+                <th className="p-4 text-center">Puntos</th>
                 <th className="p-4 text-center">Total Comprado</th>
                 <th className="p-4 pr-6 text-center">Acciones</th>
               </tr>
@@ -193,7 +254,7 @@ const Clientes = () => {
             <tbody className="divide-y divide-gray-100 text-sm">
               {filteredClientes.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-gray-400 italic">
+                  <td colSpan="7" className="p-8 text-center text-gray-400 italic">
                     No se encontraron clientes.
                   </td>
                 </tr>
@@ -205,7 +266,7 @@ const Clientes = () => {
                       <div>
                         {c.nombre}
                         {esCumpleanosHoy(c.fechaNacimiento) && (
-                          <span className="ml-2 inline-flex items-center gap-1 bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                          <span className="ml-2 inline-flex items-center gap-1 bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse font-sans">
                             🎁 ¡Hoy cumple años!
                           </span>
                         )}
@@ -214,7 +275,7 @@ const Clientes = () => {
                         const aviso = obtenerAvisoCita(c.citas);
                         if (!aviso) return null;
                         return (
-                          <span className="mt-1 inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded font-bold animate-pulse">
+                          <span className="mt-1 inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded font-bold animate-pulse font-sans">
                             <i className="fa-regular fa-clock"></i> Recordatorio Cita: {aviso}
                           </span>
                         );
@@ -232,28 +293,38 @@ const Clientes = () => {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => enviarCRM('cita', c.nombre, c.telefono)}
-                          className="bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-purple-100 transition-colors cursor-pointer"
+                          className="bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-purple-100 transition-colors cursor-pointer font-sans"
                           title="Recordatorio Cita"
                         >
                           <i className="fa-regular fa-calendar-check"></i> Cita
                         </button>
                         <button
                           onClick={() => enviarCRM('gracias', c.nombre, c.telefono)}
-                          className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer"
+                          className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer font-sans"
                           title="Agradecer Compra"
                         >
                           <i className="fa-solid fa-heart"></i> Gracias
                         </button>
                         <button
                           onClick={() => enviarCRM('cumple', c.nombre, c.telefono)}
-                          className="bg-pink-50 text-pink-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-pink-100 transition-colors cursor-pointer"
+                          className="bg-pink-50 text-pink-600 px-2 py-1 rounded-lg text-xs font-semibold hover:bg-pink-100 transition-colors cursor-pointer font-sans"
                           title="Cumpleaños"
                         >
                           <i className="fa-solid fa-cake-candles"></i> Cumple
                         </button>
                       </div>
                     </td>
-                    <td className="p-4 text-center font-bold text-emerald-600">{format(c.totalComprado)}</td>
+                    <td className="p-4 text-center font-sans">
+                      <button
+                        onClick={() => abrirHistorialPuntos(c)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs cursor-pointer border border-purple-100/50 transition-all font-mono"
+                        title="Ver Historial de Puntos"
+                      >
+                        <i className="fa-solid fa-star text-purple-500"></i>
+                        {c.puntosFidelidad} pts
+                      </button>
+                    </td>
+                    <td className="p-4 text-center font-bold text-emerald-600 font-mono">{format(c.totalComprado)}</td>
                     <td className="p-4 pr-6 text-center">
                       <button
                         onClick={() => openEditModal(c)}
@@ -275,6 +346,67 @@ const Clientes = () => {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* MODAL HISTORIAL DE PUNTOS */}
+      {showHistoryModal && clienteSeleccionadoPuntos && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity animate-fadeIn">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-4 md:p-6 shadow-xl border border-pink-100 flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center mb-4 shrink-0 pb-3 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-1.5 font-sans">
+                  <i className="fa-solid fa-clock-rotate-left text-purple-500"></i> Historial de Puntos
+                </h3>
+                <p className="text-[10px] text-gray-400 font-sans mt-0.5">Auditoría de puntos acumulados y canjes de <strong>{clienteSeleccionadoPuntos.nombre}</strong></p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowHistoryModal(false);
+                  setClienteSeleccionadoPuntos(null);
+                }}
+                className="text-gray-400 hover:text-rose-500 cursor-pointer transition-colors"
+              >
+                <i className="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 pr-1 font-sans">
+              {!clienteSeleccionadoPuntos.historialPuntos || clienteSeleccionadoPuntos.historialPuntos.length === 0 ? (
+                <div className="p-8 text-center text-xs text-gray-400 italic">No se registran movimientos de puntos para este cliente.</div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-[10px] uppercase font-bold text-gray-500 border-b border-gray-100">
+                      <th className="px-4 py-2">Fecha</th>
+                      <th className="px-4 py-2">Concepto</th>
+                      <th className="px-4 py-2 text-right">Puntos</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-xs">
+                    {clienteSeleccionadoPuntos.historialPuntos.map((h) => {
+                      const esGanancia = h.puntos > 0;
+                      return (
+                        <tr key={h.id} className="hover:bg-gray-50/40 transition-colors">
+                          <td className="px-4 py-3 text-gray-400 font-mono text-[10px]">
+                            {formatFecha(h.fecha)}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-gray-700">
+                            {h.concepto}
+                          </td>
+                          <td className={`px-4 py-3 text-right font-black font-mono text-xs ${
+                            esGanancia ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>
+                            {esGanancia ? '+' : ''}{h.puntos}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

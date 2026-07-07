@@ -24,6 +24,13 @@ const POS = () => {
   const [dniMessage, setDniMessage] = useState('');
   const [clienteExiste, setClienteExiste] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const [clientePuntos, setClientePuntos] = useState(0);
+  const [puntosCanjeados, setPuntosCanjeados] = useState(0);
+
+  // Autocomplete and CRM list state in POS
+  const [clientes, setClientes] = useState([]);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
   // Sales History states
   const [history, setHistory] = useState([]);
@@ -46,10 +53,20 @@ const POS = () => {
     }
   };
 
+  const fetchClientes = async () => {
+    try {
+      const res = await apiClient.get('/clientes');
+      setClientes(res.data);
+    } catch (err) {
+      console.error('Error al obtener clientes:', err);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       await fetchProductosYStats();
+      await fetchClientes();
       setLoading(false);
     };
     init();
@@ -95,6 +112,11 @@ const POS = () => {
     setDniMessage('');
     setClienteExiste(false);
     setSearchPerformed(false);
+    setClientePuntos(0);
+    setPuntosCanjeados(0);
+    setClientSearchQuery('');
+    setMostrarSugerencias(false);
+    fetchClientes();
     setShowCheckoutModal(true);
   };
 
@@ -113,6 +135,8 @@ const POS = () => {
         setClienteCorreo(found.correo || '');
         setClienteFechaNacimiento(found.fechaNacimiento || '');
         setClienteExiste(true);
+        setClientePuntos(found.puntosFidelidad || 0);
+        setPuntosCanjeados(0);
         setSearchPerformed(true);
         setDniMessage('¡Cliente encontrado!');
       } else {
@@ -121,6 +145,8 @@ const POS = () => {
         setClienteCorreo('');
         setClienteFechaNacimiento('');
         setClienteExiste(false);
+        setClientePuntos(0);
+        setPuntosCanjeados(0);
         setSearchPerformed(true);
         setDniMessage('Cliente nuevo. Llene los datos para registrarlo.');
       }
@@ -149,12 +175,14 @@ const POS = () => {
         clienteCorreo,
         clienteFechaNacimiento,
         metodoPago,
-        statusBolsa
+        statusBolsa,
+        puntosCanjeados
       });
       toast.success(res.data.mensaje);
       setCart([]);
       setShowCheckoutModal(false);
       fetchProductosYStats();
+      fetchClientes();
     } catch (err) {
       console.error('Error al realizar checkout:', err);
       toast.error(err.response?.data?.error || 'Error al procesar la venta.');
@@ -331,9 +359,17 @@ const POS = () => {
               </button>
             </div>
 
-            <div className="bg-emerald-50 rounded-xl p-4 mb-3 text-center border border-emerald-100">
+            <div className="bg-emerald-50 rounded-xl p-4 mb-3 text-center border border-emerald-100 space-y-1">
               <p className="text-sm text-emerald-700 font-bold uppercase tracking-wider">Monto a Cobrar</p>
-              <p className="text-3xl font-black text-emerald-600 mt-1">{format(cartTotal)}</p>
+              {puntosCanjeados > 0 ? (
+                <>
+                  <p className="text-xs text-gray-400 line-through">{format(cartTotal)}</p>
+                  <p className="text-xs text-purple-600 font-bold">- Descuento Puntos: {format(puntosCanjeados * 0.5)}</p>
+                  <p className="text-3xl font-black text-emerald-600 mt-1">{format(Math.max(0, cartTotal - puntosCanjeados * 0.5))}</p>
+                </>
+              ) : (
+                <p className="text-3xl font-black text-emerald-600 mt-1">{format(cartTotal)}</p>
+              )}
             </div>
 
             <div className="bg-pink-50/50 p-3 rounded-xl border border-pink-100 flex items-center justify-between mb-4">
@@ -359,13 +395,99 @@ const POS = () => {
                   1. Datos del Cliente
                 </h4>
                 <div className="space-y-3">
+                  {/* Autocomplete / Search input */}
+                  <div className="relative">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Buscar Cliente Registrado (Nombre/DNI)</label>
+                    <input
+                      type="text"
+                      value={clientSearchQuery}
+                      onChange={(e) => {
+                        setClientSearchQuery(e.target.value);
+                        setMostrarSugerencias(true);
+                      }}
+                      onFocus={() => setMostrarSugerencias(true)}
+                      onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)}
+                      placeholder="Escriba nombre o DNI..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-white"
+                    />
+                    {mostrarSugerencias && clientSearchQuery.trim() && (
+                      (() => {
+                        const filtered = clientes.filter(c => 
+                          c.nombre.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                          c.dni.includes(clientSearchQuery)
+                        ).slice(0, 5);
+
+                        if (filtered.length === 0) return null;
+
+                        return (
+                          <ul className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto divide-y divide-gray-100 font-sans">
+                            {filtered.map(c => (
+                              <li 
+                                key={c.id} 
+                                onClick={() => {
+                                  setClienteDni(c.dni);
+                                  setClienteNombre(c.nombre);
+                                  setClienteTelefono(c.telefono || '');
+                                  setClienteCorreo(c.correo || '');
+                                  setClienteFechaNacimiento(c.fechaNacimiento || '');
+                                  setClienteExiste(true);
+                                  setClientePuntos(c.puntosFidelidad || 0);
+                                  setPuntosCanjeados(0);
+                                  setSearchPerformed(true);
+                                  setDniMessage('¡Cliente encontrado!');
+                                  setClientSearchQuery('');
+                                  setMostrarSugerencias(false);
+                                }}
+                                className="px-4 py-2 hover:bg-pink-50 hover:text-pink-600 cursor-pointer text-xs flex justify-between items-center"
+                              >
+                                <div>
+                                  <span className="font-semibold text-gray-800 text-left block">{c.nombre}</span>
+                                  <span className="font-bold text-purple-600 text-[10px] block mt-0.5">⭐ {c.puntosFidelidad} puntos</span>
+                                </div>
+                                <span className="text-gray-400 font-mono text-[10px]">DNI: {c.dni}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      })()
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">DNI / Documento</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={clienteDni}
-                        onChange={(e) => setClienteDni(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setClienteDni(val);
+                          // Auto-lookup client in loaded client list if length >= 8
+                          if (val.trim().length >= 8) {
+                            const found = clientes.find(c => c.dni === val.trim());
+                            if (found) {
+                              setClienteNombre(found.nombre);
+                              setClienteTelefono(found.telefono || '');
+                              setClienteCorreo(found.correo || '');
+                              setClienteFechaNacimiento(found.fechaNacimiento || '');
+                              setClienteExiste(true);
+                              setClientePuntos(found.puntosFidelidad || 0);
+                              setPuntosCanjeados(0);
+                              setSearchPerformed(true);
+                              setDniMessage('¡Cliente encontrado!');
+                            }
+                          } else if (!val.trim()) {
+                            setDniMessage('');
+                            setClienteNombre('');
+                            setClienteTelefono('');
+                            setClienteCorreo('');
+                            setClienteFechaNacimiento('');
+                            setClienteExiste(false);
+                            setClientePuntos(0);
+                            setPuntosCanjeados(0);
+                            setSearchPerformed(false);
+                          }
+                        }}
                         placeholder="Ej. 76543210"
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 bg-white"
                       />
@@ -433,16 +555,43 @@ const POS = () => {
                         </div>
                       </>
                     ) : (
-                      <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl space-y-2 mt-2">
+                      <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl space-y-3 mt-2 font-sans">
                         <p className="text-sm text-pink-700 font-bold flex items-center gap-1.5">
                           <i className="fa-solid fa-circle-check text-pink-500"></i>
                           Cliente Registrado
                         </p>
-                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 pt-1">
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 pt-1 pb-2 border-b border-pink-100/50">
                           <div><strong>Nombre:</strong> {clienteNombre}</div>
                           <div><strong>Teléfono:</strong> {clienteTelefono || '-'}</div>
                           <div><strong>Correo:</strong> {clienteCorreo || '-'}</div>
                           <div><strong>Cumpleaños:</strong> {clienteFechaNacimiento || '-'}</div>
+                        </div>
+                        <div className="pt-1 space-y-2">
+                          <p className="text-xs text-purple-700 font-bold flex items-center gap-1.5">
+                            <i className="fa-solid fa-star text-purple-500"></i>
+                            Puntos Disponibles: <strong className="text-sm font-black">{clientePuntos}</strong>
+                            <span className="text-[10px] text-gray-400 font-normal"> (Equivale a {format(clientePuntos * 0.5)} dscto.)</span>
+                          </p>
+                          {clientePuntos > 0 && (
+                            <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-pink-100">
+                              <label className="text-[10px] font-bold text-gray-500 uppercase flex-1 text-left">Canjear Puntos</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max={Math.min(clientePuntos, Math.floor(cartTotal / 0.5))}
+                                value={puntosCanjeados}
+                                onChange={(e) => {
+                                  const val = Math.min(clientePuntos, Math.max(0, parseInt(e.target.value) || 0));
+                                  if (val * 0.5 > cartTotal) {
+                                    setPuntosCanjeados(Math.floor(cartTotal / 0.5));
+                                  } else {
+                                    setPuntosCanjeados(val);
+                                  }
+                                }}
+                                className="w-20 px-2 py-1 border border-gray-200 rounded-lg text-xs text-center font-bold focus:outline-none focus:border-pink-400"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )

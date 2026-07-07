@@ -73,13 +73,14 @@ model Cliente {
   correo          String?
   fechaNacimiento String?      // Opcional: fecha de nacimiento en formato YYYY-MM-DD
   totalComprado   Decimal      @default(0) @db.Decimal(10, 2)
-  puntosFidelidad Int          @default(0) // 1 punto por cada S/ 100 de compra
+  puntosFidelidad Int          @default(0) // 1 punto por cada S/ 10 de compra
   activo          Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
   ventas          Venta[]
   citas           Cita[]
+  historialPuntos HistorialPuntos[]
 }
 
 // ─────────────────────────────────────────────
@@ -87,19 +88,20 @@ model Cliente {
 // ─────────────────────────────────────────────
 
 model Venta {
-  id            Int         @id @default(autoincrement())
-  fecha         DateTime    @default(now())
-  clienteNombre String      // siempre presente ("Cliente Anónimo" si no registrado)
-  clienteId     Int?        // opcional: link al cliente registrado en CRM
-  cliente       Cliente?    @relation(fields: [clienteId], references: [id])
-  metodoPago    String      // "Efectivo" | "Yape" | "Plin" | "Transferencia"
-  total         Decimal     @db.Decimal(10, 2)
-  puntos        Int         @default(0)
-  llevaBolsa    Boolean     @default(false)
-  citaId        Int?        @unique // Relación con Cita
-  cita          Cita?       @relation(fields: [citaId], references: [id], onDelete: SetNull)
+  id              Int         @id @default(autoincrement())
+  fecha           DateTime    @default(now())
+  clienteNombre   String      // siempre presente ("Cliente Anónimo" si no registrado)
+  clienteId       Int?        // opcional: link al cliente registrado en CRM
+  cliente         Cliente?    @relation(fields: [clienteId], references: [id])
+  metodoPago      String      // "Efectivo" | "Yape" | "Plin" | "Transferencia"
+  total           Decimal     @db.Decimal(10, 2)
+  puntos          Int         @default(0)
+  descuentoPuntos Decimal     @default(0) @db.Decimal(10, 2)
+  llevaBolsa      Boolean     @default(false)
+  citaId          Int?        @unique // Relación con Cita
+  cita            Cita?       @relation(fields: [citaId], references: [id], onDelete: SetNull)
 
-  items         ItemVenta[]
+  items           ItemVenta[]
 }
 
 // Líneas del ticket de venta
@@ -163,4 +165,18 @@ model GastoInterno {
   producto        Producto? @relation(fields: [productoId], references: [id], onDelete: SetNull)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CRM — Historial de Auditoría de Puntos
+// ─────────────────────────────────────────────
+
+model HistorialPuntos {
+  id        Int      @id @default(autoincrement())
+  clienteId Int
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  puntos    Int      // positivo para acumulación, negativo para redención/canje
+  concepto  String   // "Acumulación por Venta", "Canje en Venta", etc.
+  ventaId   Int?     // link opcional a la venta que originó la transacción de puntos
+  fecha     DateTime @default(now())
 }

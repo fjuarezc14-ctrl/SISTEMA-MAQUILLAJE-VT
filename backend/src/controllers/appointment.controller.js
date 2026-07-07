@@ -39,7 +39,7 @@ export const obtenerCitas = async (req, res) => {
 // ── POST /api/citas (Crear una cita) ──
 export const crearCita = async (req, res) => {
   try {
-    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos } = req.body;
+    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos, puntosCanjeados = 0 } = req.body;
 
     if (!fecha || !hora || !clienteNombre || !servicio) {
       return res.status(400).json({ error: 'Fecha, hora, cliente y servicio son obligatorios.' });
@@ -60,6 +60,11 @@ export const crearCita = async (req, res) => {
       }
 
       await prisma.$transaction(async (tx) => {
+        const canje = parseInt(puntosCanjeados) || 0;
+        if (canje < 0) {
+          throw new Error('La cantidad de puntos a canjear no puede ser negativa.');
+        }
+
         // 1. Buscar o crear cliente
         let dbCliente = await tx.cliente.findFirst({
           where: {
@@ -68,14 +73,29 @@ export const crearCita = async (req, res) => {
           }
         });
 
-        const nuevosPuntos = Math.floor(priceServ / 10);
+        let descuentoPuntosVal = 0;
+        if (canje > 0) {
+          if (!dbCliente) {
+            throw new Error('No se pueden canjear puntos para un cliente no registrado.');
+          }
+          if (dbCliente.puntosFidelidad < canje) {
+            throw new Error(`El cliente solo tiene ${dbCliente.puntosFidelidad} puntos disponibles.`);
+          }
+          descuentoPuntosVal = canje * 0.5; // Equivalencia: 1 punto = S/ 0.50
+          if (descuentoPuntosVal > priceServ) {
+            throw new Error(`El descuento de puntos (S/ ${descuentoPuntosVal.toFixed(2)}) supera el total del servicio (S/ ${priceServ.toFixed(2)}).`);
+          }
+        }
+
+        const totalNetoCita = Math.max(0, priceServ - descuentoPuntosVal);
+        const nuevosPuntos = Math.floor(totalNetoCita / 10);
 
         if (dbCliente) {
           dbCliente = await tx.cliente.update({
             where: { id: dbCliente.id },
             data: {
-              totalComprado: dbCliente.totalComprado.toNumber() + priceServ,
-              puntosFidelidad: dbCliente.puntosFidelidad + nuevosPuntos
+              totalComprado: dbCliente.totalComprado.toNumber() + totalNetoCita,
+              puntosFidelidad: dbCliente.puntosFidelidad - canje + nuevosPuntos
             }
           });
         }
@@ -177,13 +197,14 @@ export const crearCita = async (req, res) => {
         }
 
         // 4. Crear la venta
-        await tx.venta.create({
+        const nuevaVenta = await tx.venta.create({
           data: {
             clienteNombre: dbCliente ? dbCliente.nombre : clienteNombre,
             clienteId: dbCliente ? dbCliente.id : null,
             metodoPago,
-            total: priceServ,
+            total: totalNetoCita,
             puntos: nuevosPuntos,
+            descuentoPuntos: descuentoPuntosVal,
             llevaBolsa: false,
             citaId: finalCita.id,
             items: {
@@ -191,6 +212,31 @@ export const crearCita = async (req, res) => {
             }
           }
         });
+
+        // 5. Registrar movimientos en HistorialPuntos
+        if (dbCliente) {
+          if (canje > 0) {
+            await tx.historialPuntos.create({
+              data: {
+                clienteId: dbCliente.id,
+                puntos: -canje,
+                concepto: `Canje de descuento en Cita (Descuento de S/ ${descuentoPuntosVal.toFixed(2)})`,
+                ventaId: nuevaVenta.id
+              }
+            });
+          }
+
+          if (nuevosPuntos > 0) {
+            await tx.historialPuntos.create({
+              data: {
+                clienteId: dbCliente.id,
+                puntos: nuevosPuntos,
+                concepto: `Acumulación por Cita`,
+                ventaId: nuevaVenta.id
+              }
+            });
+          }
+        }
       });
     } else {
       // Flujo normal pendiente/cancelado
@@ -231,7 +277,7 @@ export const crearCita = async (req, res) => {
 export const actualizarCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos } = req.body;
+    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos, puntosCanjeados = 0 } = req.body;
 
     const citaId = parseInt(id);
     if (isNaN(citaId)) {
@@ -361,7 +407,6 @@ export const actualizarCita = async (req, res) => {
         let dbCliente = null;
         const nombreClienteCita = clienteNombre || citaExistente.clienteNombre;
         
-        // Buscamos si existe por nombre
         dbCliente = await tx.cliente.findFirst({
           where: {
             nombre: {
@@ -372,26 +417,47 @@ export const actualizarCita = async (req, res) => {
           }
         });
 
-        const nuevosPuntos = Math.floor(priceServ / 10); // 1 punto por cada S/10
+        const canje = parseInt(puntosCanjeados) || 0;
+        if (canje < 0) {
+          throw new Error('La cantidad de puntos a canjear no puede ser negativa.');
+        }
+
+        let descuentoPuntosVal = 0;
+        if (canje > 0) {
+          if (!dbCliente) {
+            throw new Error('No se pueden canjear puntos para un cliente no registrado.');
+          }
+          if (dbCliente.puntosFidelidad < canje) {
+            throw new Error(`El cliente solo tiene ${dbCliente.puntosFidelidad} puntos disponibles.`);
+          }
+          descuentoPuntosVal = canje * 0.5; // Equivalencia: 1 punto = S/ 0.50
+          if (descuentoPuntosVal > priceServ) {
+            throw new Error(`El descuento de puntos (S/ ${descuentoPuntosVal.toFixed(2)}) supera el total del servicio (S/ ${priceServ.toFixed(2)}).`);
+          }
+        }
+
+        const totalNetoCita = Math.max(0, priceServ - descuentoPuntosVal);
+        const nuevosPuntos = Math.floor(totalNetoCita / 10); // 1 punto por cada S/10 netos
 
         if (dbCliente) {
           dbCliente = await tx.cliente.update({
             where: { id: dbCliente.id },
             data: {
-              totalComprado: dbCliente.totalComprado.toNumber() + priceServ,
-              puntosFidelidad: dbCliente.puntosFidelidad + nuevosPuntos
+              totalComprado: dbCliente.totalComprado.toNumber() + totalNetoCita,
+              puntosFidelidad: dbCliente.puntosFidelidad - canje + nuevosPuntos
             }
           });
         }
 
         // 4. Crear la Venta
-        await tx.venta.create({
+        const nuevaVenta = await tx.venta.create({
           data: {
             clienteNombre: dbCliente ? dbCliente.nombre : nombreClienteCita,
             clienteId: dbCliente ? dbCliente.id : null,
             metodoPago,
-            total: priceServ,
+            total: totalNetoCita,
             puntos: nuevosPuntos,
+            descuentoPuntos: descuentoPuntosVal,
             llevaBolsa: false,
             citaId: citaId,
             items: {
@@ -399,6 +465,31 @@ export const actualizarCita = async (req, res) => {
             }
           }
         });
+
+        // Registrar movimientos en HistorialPuntos
+        if (dbCliente) {
+          if (canje > 0) {
+            await tx.historialPuntos.create({
+              data: {
+                clienteId: dbCliente.id,
+                puntos: -canje,
+                concepto: `Canje de descuento en Cita (Descuento de S/ ${descuentoPuntosVal.toFixed(2)})`,
+                ventaId: nuevaVenta.id
+              }
+            });
+          }
+
+          if (nuevosPuntos > 0) {
+            await tx.historialPuntos.create({
+              data: {
+                clienteId: dbCliente.id,
+                puntos: nuevosPuntos,
+                concepto: `Acumulación por Cita`,
+                ventaId: nuevaVenta.id
+              }
+            });
+          }
+        }
 
         // 5. Actualizar Cita
         let fechaHora = undefined;
@@ -439,17 +530,24 @@ export const actualizarCita = async (req, res) => {
               where: { id: venta.clienteId }
             });
             if (cliente) {
+              const canjeRevertir = Math.round(venta.descuentoPuntos.toNumber() * 2);
+              const puntosGanadosRevertir = venta.puntos;
               await tx.cliente.update({
                 where: { id: cliente.id },
                 data: {
                   totalComprado: Math.max(0, cliente.totalComprado.toNumber() - venta.total.toNumber()),
-                  puntosFidelidad: Math.max(0, cliente.puntosFidelidad - venta.puntos)
+                  puntosFidelidad: Math.max(0, cliente.puntosFidelidad + canjeRevertir - puntosGanadosRevertir)
                 }
               });
             }
           }
 
-          // 3. Eliminar la venta
+          // 3. Eliminar registros de historial de puntos asociados a la venta
+          await tx.historialPuntos.deleteMany({
+            where: { ventaId: venta.id }
+          });
+
+          // 4. Eliminar la venta
           await tx.venta.delete({
             where: { id: venta.id }
           });

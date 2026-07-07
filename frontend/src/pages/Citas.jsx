@@ -27,6 +27,7 @@ const Citas = () => {
   const [precioServicio, setPrecioServicio] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
+  const [puntosCanjeados, setPuntosCanjeados] = useState(0);
 
   const fetchCitas = async () => {
     setLoading(true);
@@ -83,6 +84,7 @@ const Citas = () => {
     setPrecioServicio('');
     setMetodoPago('Efectivo');
     setInsumosSeleccionados([]);
+    setPuntosCanjeados(0);
     setShowModal(true);
   };
 
@@ -97,6 +99,7 @@ const Citas = () => {
     setPrecioServicio(cita.precioServicio || '');
     setMetodoPago(cita.metodoPago || 'Efectivo');
     setInsumosSeleccionados([]);
+    setPuntosCanjeados(0);
     setShowModal(true);
   };
 
@@ -113,7 +116,8 @@ const Citas = () => {
         ...(estado === 'Completado' && !selectedCita?.ingresoRegistrado && {
           precioServicio: parseFloat(precioServicio || 0),
           metodoPago,
-          insumos: insumosSeleccionados.filter(ins => ins.productoId !== '')
+          insumos: insumosSeleccionados.filter(ins => ins.productoId !== ''),
+          puntosCanjeados
         })
       };
       if (selectedCita) {
@@ -356,9 +360,16 @@ const Citas = () => {
                             required
                             min="0"
                             value={precioServicio}
-                            onChange={(e) => setPrecioServicio(e.target.value)}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setPrecioServicio(val);
+                              const pServ = parseFloat(val || 0);
+                              if (puntosCanjeados * 0.5 > pServ) {
+                                setPuntosCanjeados(Math.floor(pServ / 0.5));
+                              }
+                            }}
                             placeholder="Ej. 150.00"
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white font-sans"
                           />
                         </div>
                         <div>
@@ -366,7 +377,7 @@ const Citas = () => {
                           <select
                             value={metodoPago}
                             onChange={(e) => setMetodoPago(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer font-sans"
                           >
                             <option value="Efectivo">Efectivo</option>
                             <option value="Yape">Yape</option>
@@ -375,6 +386,48 @@ const Citas = () => {
                           </select>
                         </div>
                       </div>
+
+                      {(() => {
+                        const matchedClientObj = clientes.find(c => c.nombre.toLowerCase() === clienteNombre.toLowerCase());
+                        const clientPointsAvailable = matchedClientObj ? (matchedClientObj.puntosFidelidad || 0) : 0;
+                        if (clientPointsAvailable <= 0) return null;
+
+                        return (
+                          <div className="pt-2.5 space-y-2 border-t border-pink-100/50 mt-1 font-sans">
+                            <p className="text-[10px] text-purple-700 font-bold flex items-center gap-1.5">
+                              <i className="fa-solid fa-star text-purple-500"></i>
+                              Puntos Disponibles: <strong className="text-xs font-black">{clientPointsAvailable}</strong>
+                              <span className="text-[9px] text-gray-400 font-normal"> (Equivale a S/ {(clientPointsAvailable * 0.5).toFixed(2)} de descuento)</span>
+                            </p>
+                            <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-pink-100">
+                              <label className="text-[10px] font-bold text-gray-500 uppercase flex-1 text-left">Canjear Puntos</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max={Math.min(clientPointsAvailable, Math.floor(parseFloat(precioServicio || 0) / 0.5))}
+                                value={puntosCanjeados}
+                                onChange={(e) => {
+                                  const val = Math.min(clientPointsAvailable, Math.max(0, parseInt(e.target.value) || 0));
+                                  const pServ = parseFloat(precioServicio || 0);
+                                  if (val * 0.5 > pServ) {
+                                    setPuntosCanjeados(Math.floor(pServ / 0.5));
+                                  } else {
+                                    setPuntosCanjeados(val);
+                                  }
+                                }}
+                                className="w-20 px-2 py-1 border border-gray-200 rounded-lg text-xs text-center font-bold focus:outline-none focus:border-pink-400 font-sans"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {puntosCanjeados > 0 && (
+                        <div className="bg-purple-50 border border-purple-100 p-2.5 rounded-xl text-[10px] text-purple-700 font-semibold flex justify-between items-center font-sans">
+                          <span>Descuento aplicado: <strong>- S/ {(puntosCanjeados * 0.5).toFixed(2)}</strong></span>
+                          <span>Neto a cobrar: <strong className="text-xs text-purple-800">{new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(Math.max(0, parseFloat(precioServicio || 0) - puntosCanjeados * 0.5))}</strong></span>
+                        </div>
+                      )}
 
                       {/* Sección de Insumos */}
                       <div>

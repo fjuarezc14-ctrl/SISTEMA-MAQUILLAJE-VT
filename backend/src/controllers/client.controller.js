@@ -8,6 +8,11 @@ export const obtenerClientes = async (req, res) => {
     const clientes = await prisma.cliente.findMany({
       where: { activo: true },
       include: {
+        historialPuntos: {
+          orderBy: {
+            fecha: 'desc'
+          }
+        },
         citas: {
           where: {
             estado: 'Pendiente',
