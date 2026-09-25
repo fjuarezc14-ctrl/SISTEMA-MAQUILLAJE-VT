@@ -16,7 +16,10 @@ import {
 } from '../controllers/client.controller.js';
 import {
   crearVenta,
-  obtenerHistorialVentas
+  obtenerHistorialVentas,
+  registrarAbonoCredito,
+  obtenerCreditosPendientes,
+  reporteVentasDelDia
 } from '../controllers/sale.controller.js';
 import {
   obtenerCitas,
@@ -33,6 +36,30 @@ import {
   obtenerDashboard,
   obtenerFinanzas
 } from '../controllers/report.controller.js';
+import {
+  obtenerServicios,
+  crearServicio,
+  actualizarServicio,
+  eliminarServicio
+} from '../controllers/service.controller.js';
+import {
+  obtenerPersonal,
+  crearPersonal,
+  actualizarPersonal,
+  eliminarPersonal
+} from '../controllers/staff.controller.js';
+import {
+  obtenerEstadoCaja,
+  abrirCaja,
+  cerrarCaja,
+  obtenerHistorialCajas
+} from '../controllers/cash.controller.js';
+import {
+  obtenerPacks,
+  crearPack,
+  actualizarPack,
+  eliminarPack
+} from '../controllers/pack.controller.js';
 
 const router = express.Router();
 
@@ -53,9 +80,12 @@ router.post('/clientes', crearCliente);
 router.put('/clientes/:id', actualizarCliente);
 router.delete('/clientes/:id', permitirRoles('ADMIN'), eliminarCliente);
 
-// ── Rutas de Ventas ──
+// ── Rutas de Ventas, Comprobantes, Créditos y Reportes ──
 router.post('/ventas', crearVenta);
 router.get('/ventas/historial', obtenerHistorialVentas);
+router.get('/ventas/creditos', obtenerCreditosPendientes);
+router.post('/ventas/:id/abonos', registrarAbonoCredito);
+router.get('/ventas/reporte-del-dia', reporteVentasDelDia);
 
 // ── Rutas de Citas ──
 router.get('/citas', obtenerCitas);
@@ -71,5 +101,29 @@ router.put('/gastos/:id/consumo', registrarConsumo);
 // ── Rutas de Reportes e Informes ──
 router.get('/dashboard', obtenerDashboard);
 router.get('/finanzas', permitirRoles('ADMIN'), obtenerFinanzas);
+
+// ── Rutas de Servicios (Catálogo Oficial) ──
+router.get('/servicios', obtenerServicios);
+router.post('/servicios', permitirRoles('ADMIN'), crearServicio);
+router.put('/servicios/:id', permitirRoles('ADMIN'), actualizarServicio);
+router.delete('/servicios/:id', permitirRoles('ADMIN'), eliminarServicio);
+
+// ── Rutas de Personal / Colaboradoras ──
+router.get('/personal', obtenerPersonal);
+router.post('/personal', permitirRoles('ADMIN'), crearPersonal);
+router.put('/personal/:id', permitirRoles('ADMIN'), actualizarPersonal);
+router.delete('/personal/:id', permitirRoles('ADMIN'), eliminarPersonal);
+
+// ── Rutas de Control de Caja (Apertura / Arqueo / Cierre) ──
+router.get('/caja/estado', obtenerEstadoCaja);
+router.post('/caja/abrir', abrirCaja);
+router.post('/caja/cerrar', cerrarCaja);
+router.get('/caja/historial', obtenerHistorialCajas);
+
+// ── Rutas de Packs y Promociones ──
+router.get('/packs', obtenerPacks);
+router.post('/packs', permitirRoles('ADMIN'), crearPack);
+router.put('/packs/:id', permitirRoles('ADMIN'), actualizarPack);
+router.delete('/packs/:id', permitirRoles('ADMIN'), eliminarPack);
 
 export default router;

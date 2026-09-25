@@ -88,20 +88,33 @@ model Cliente {
 // ─────────────────────────────────────────────
 
 model Venta {
-  id              Int         @id @default(autoincrement())
-  fecha           DateTime    @default(now())
-  clienteNombre   String      // siempre presente ("Cliente Anónimo" si no registrado)
-  clienteId       Int?        // opcional: link al cliente registrado en CRM
-  cliente         Cliente?    @relation(fields: [clienteId], references: [id])
-  metodoPago      String      // "Efectivo" | "Yape" | "Plin" | "Transferencia"
-  total           Decimal     @db.Decimal(10, 2)
-  puntos          Int         @default(0)
-  descuentoPuntos Decimal     @default(0) @db.Decimal(10, 2)
-  llevaBolsa      Boolean     @default(false)
-  citaId          Int?        @unique // Relación con Cita
-  cita            Cita?       @relation(fields: [citaId], references: [id], onDelete: SetNull)
+  id                Int            @id @default(autoincrement())
+  fecha             DateTime       @default(now())
+  clienteNombre     String         // siempre presente ("Cliente Anónimo" si no registrado)
+  clienteId         Int?           // opcional: link al cliente registrado en CRM
+  cliente           Cliente?       @relation(fields: [clienteId], references: [id])
+  metodoPago        String         // "Efectivo" | "Yape" | "Plin" | "Transferencia" | "Pago Mixto"
+  total             Decimal        @db.Decimal(10, 2)
+  puntos            Int            @default(0)
+  descuentoPuntos   Decimal        @default(0) @db.Decimal(10, 2)
+  llevaBolsa        Boolean        @default(false)
+  citaId            Int?           @unique // Relación con Cita
+  cita              Cita?          @relation(fields: [citaId], references: [id], onDelete: SetNull)
 
-  items           ItemVenta[]
+  // Campos para control de boutique y facturación
+  tipoVenta         String         @default("CONTADO") // "CONTADO" | "CREDITO"
+  tipoComprobante   String         @default("TICKET") // "TICKET" | "BOLETA" | "FACTURA"
+  numeroComprobante String?
+  montoEfectivo     Decimal        @default(0) @db.Decimal(10, 2)
+  montoDigital      Decimal        @default(0) @db.Decimal(10, 2)
+  metodoPagoDigital String?
+  saldoPendiente    Decimal        @default(0) @db.Decimal(10, 2)
+  estadoCredito     String?        // "PENDIENTE" | "PAGADO"
+  cajaSesionId      Int?
+  cajaSesion        CajaSesion?    @relation(fields: [cajaSesionId], references: [id], onDelete: SetNull)
+  abonosCredito     AbonoCredito[]
+
+  items             ItemVenta[]
 }
 
 // Líneas del ticket de venta
@@ -128,13 +141,15 @@ model Cita {
   clienteId         Int?          // opcional: link al cliente registrado
   cliente           Cliente?      @relation(fields: [clienteId], references: [id])
   servicio          String
-  estado            String        @default("Pendiente") // "Pendiente" | "Completado" | "Cancelado"
+  estado            String        @default("Pendiente") // "Pendiente" | "Completado" | "Cancelado" | "Anulado"
   notas             String?
   precioServicio    Decimal       @default(0) @db.Decimal(10, 2)
   montoAdelanto     Decimal       @default(20.00) @db.Decimal(10, 2)
   comprobanteUrl    String?
   metodoPagoReserva String?
-  ingresoRegistrado  Boolean       @default(false)
+  ingresoRegistrado Boolean       @default(false)
+  personalId        Int?
+  personal          Personal?     @relation(fields: [personalId], references: [id], onDelete: SetNull)
   insumos           CitaInsumo[]
   venta             Venta?
   createdAt         DateTime      @default(now())
@@ -148,6 +163,84 @@ model CitaInsumo {
   productoId Int
   producto   Producto @relation(fields: [productoId], references: [id])
   cantidad   Int
+}
+
+// ─────────────────────────────────────────────
+// SERVICIOS — Catálogo Oficial
+// ─────────────────────────────────────────────
+
+model Servicio {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  categoria   String   @default("General") // "Maquillaje", "Peinado", "Cejas", "Uñas", "Packs"
+  precio      Decimal  @db.Decimal(10, 2)
+  duracion    String?  @default("45 min")
+  descripcion String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// PERSONAL — Estilistas y Colaboradoras
+// ─────────────────────────────────────────────
+
+model Personal {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  telefono    String?
+  cargo       String   // "Maquilladora", "Estilista", "Cosmetóloga", "Manicurista"
+  activo      Boolean  @default(true)
+  citas       Cita[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CAJA — Sesiones de Apertura y Cierre
+// ─────────────────────────────────────────────
+
+model CajaSesion {
+  id            Int       @id @default(autoincrement())
+  montoApertura Decimal   @db.Decimal(10, 2)
+  montoCierre   Decimal?  @db.Decimal(10, 2)
+  diferencia    Decimal?  @db.Decimal(10, 2)
+  estado        String    @default("ABIERTA") // "ABIERTA" | "CERRADA"
+  fechaApertura DateTime  @default(now())
+  fechaCierre   DateTime?
+  notas         String?
+  ventas        Venta[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CRÉDITOS — Abonos a Cuenta
+// ─────────────────────────────────────────────
+
+model AbonoCredito {
+  id         Int      @id @default(autoincrement())
+  ventaId    Int
+  venta      Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  monto      Decimal  @db.Decimal(10, 2)
+  metodoPago String   // "Efectivo", "Yape", "Plin", "Tarjeta", "Transferencia"
+  fecha      DateTime @default(now())
+  notas      String?
+}
+
+// ─────────────────────────────────────────────
+// PROMOCIONES Y PACKS PERSONALIZADOS
+// ─────────────────────────────────────────────
+
+model PackPromocion {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  precioPromo Decimal  @db.Decimal(10, 2)
+  itemsJson   String   // JSON string: [{ id, nombre, tipo, cantidad, precioOriginal }]
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ─────────────────────────────────────────────

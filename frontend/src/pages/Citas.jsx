@@ -43,6 +43,9 @@ const Citas = () => {
 
   // Financial and Insumos states
   const [productos, setProductos] = useState([]);
+  const [serviciosCatalogo, setServiciosCatalogo] = useState([]);
+  const [personalCatalogo, setPersonalCatalogo] = useState([]);
+  const [personalId, setPersonalId] = useState('');
   const [precioServicio, setPrecioServicio] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
@@ -79,10 +82,22 @@ const Citas = () => {
     }
   };
 
+  const fetchCatalogoExtra = async () => {
+    try {
+      const [resS, resP] = await Promise.all([
+        apiClient.get('/servicios'),
+        apiClient.get('/personal')
+      ]);
+      setServiciosCatalogo(resS.data);
+      setPersonalCatalogo(resP.data);
+    } catch (err) {}
+  };
+
   useEffect(() => {
     fetchCitas();
     fetchClientes();
     fetchProductos();
+    fetchCatalogoExtra();
   }, []);
 
   const openAddModal = () => {
@@ -1047,16 +1062,57 @@ const Citas = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Servicio</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                  Servicio de Boutique *
+                </label>
+                {serviciosCatalogo.length > 0 && (
+                  <select
+                    onChange={(e) => {
+                      const found = serviciosCatalogo.find(s => s.nombre === e.target.value);
+                      if (found) {
+                        setServicio(found.nombre);
+                        setPrecioServicio(String(found.precio));
+                      }
+                    }}
+                    className="w-full px-4 py-2 rounded-xl border border-pink-200 text-xs focus:outline-none focus:border-pink-400 bg-pink-50/30 mb-1.5 cursor-pointer font-bold text-pink-700"
+                  >
+                    <option value="">-- Seleccionar del Catálogo Oficial --</option>
+                    {serviciosCatalogo.map(s => (
+                      <option key={s.id} value={s.nombre}>
+                        {s.nombre} — S/ {parseFloat(s.precio).toFixed(2)} ({s.categoria})
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <input
                   type="text"
                   required
                   value={servicio}
                   onChange={(e) => setServicio(e.target.value)}
-                  placeholder="Ej. Maquillaje Social, Novia, Cejas..."
+                  placeholder="Ej. Maquillaje Social, Novia Glam, Cejas..."
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50"
                 />
               </div>
+
+              {personalCatalogo.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                    Personal Asignado / Colaboradora
+                  </label>
+                  <select
+                    value={personalId}
+                    onChange={(e) => setPersonalId(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-pink-400 bg-gray-50/50 cursor-pointer"
+                  >
+                    <option value="">-- Sin personal específico --</option>
+                    {personalCatalogo.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre} ({p.cargo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label>
