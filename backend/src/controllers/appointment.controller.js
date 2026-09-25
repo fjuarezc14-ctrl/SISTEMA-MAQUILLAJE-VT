@@ -298,7 +298,7 @@ export const actualizarCita = async (req, res) => {
     }
 
     let isRevertingCompleted = false;
-    if (citaExistente.estado === 'Completado' && (estado === 'Pendiente' || estado === 'Cancelado') && citaExistente.ingresoRegistrado) {
+    if (citaExistente.estado === 'Completado' && (estado === 'Pendiente' || estado === 'Cancelado' || estado === 'Anulado') && citaExistente.ingresoRegistrado) {
       isRevertingCompleted = true;
     }
 
@@ -639,7 +639,7 @@ export const actualizarCita = async (req, res) => {
   }
 };
 
-// ── DELETE /api/citas/:id (Eliminar cita) ──
+// ── DELETE /api/citas/:id (Eliminar cita con rollback seguro si estaba completada) ──
 export const eliminarCita = async (req, res) => {
   try {
     const { id } = req.params;
@@ -648,13 +648,81 @@ export const eliminarCita = async (req, res) => {
       return res.status(400).json({ error: 'ID de cita inválido.' });
     }
 
-    await prisma.cita.delete({
+    const citaExistente = await prisma.cita.findUnique({
       where: { id: citaId }
+    });
+
+    if (!citaExistente) {
+      return res.status(404).json({ error: 'Cita no encontrada.' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Si la cita estaba completada, revertimos la venta, puntos y stock de insumos
+      if (citaExistente.estado === 'Completado' && citaExistente.ingresoRegistrado) {
+        const venta = await tx.venta.findFirst({
+          where: { citaId: citaId }
+        });
+
+        if (venta) {
+          if (venta.clienteId) {
+            const cliente = await tx.cliente.findUnique({
+              where: { id: venta.clienteId }
+            });
+            if (cliente) {
+              const canjeRevertir = Math.round(venta.descuentoPuntos.toNumber() * 2);
+              const puntosGanadosRevertir = venta.puntos;
+              await tx.cliente.update({
+                where: { id: cliente.id },
+                data: {
+                  totalComprado: Math.max(0, cliente.totalComprado.toNumber() - venta.total.toNumber()),
+                  puntosFidelidad: Math.max(0, cliente.puntosFidelidad + canjeRevertir - puntosGanadosRevertir)
+                }
+              });
+            }
+          }
+
+          await tx.historialPuntos.deleteMany({
+            where: { ventaId: venta.id }
+          });
+
+          await tx.venta.delete({
+            where: { id: venta.id }
+          });
+        }
+
+        const insumosCita = await tx.citaInsumo.findMany({
+          where: { citaId: citaId }
+        });
+
+        for (const ins of insumosCita) {
+          const lotes = await tx.lote.findMany({
+            where: { productoId: ins.productoId },
+            orderBy: { createdAt: 'asc' }
+          });
+
+          if (lotes.length > 0) {
+            await tx.lote.update({
+              where: { id: lotes[0].id },
+              data: {
+                stockActual: lotes[0].stockActual + ins.cantidad
+              }
+            });
+          }
+        }
+
+        await tx.citaInsumo.deleteMany({
+          where: { citaId: citaId }
+        });
+      }
+
+      await tx.cita.delete({
+        where: { id: citaId }
+      });
     });
 
     res.json({ mensaje: 'Cita eliminada exitosamente.' });
   } catch (error) {
     console.error('Error al eliminar cita:', error);
-    res.status(500).json({ error: 'Error al eliminar la cita.' });
+    res.status(500).json({ error: error.message || 'Error al eliminar la cita.' });
   }
 };

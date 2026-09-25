@@ -274,6 +274,7 @@ const Inventario = () => {
                 <th className="p-4">Precios (Compra / Venta)</th>
                 <th className="p-4 text-center">Stock Total</th>
                 <th className="p-4">Lotes Activos</th>
+                <th className="p-4">Vencimiento</th>
                 <th className="p-4">Estado</th>
                 <th className="p-4 pr-6 text-center">Acciones</th>
               </tr>
@@ -281,7 +282,7 @@ const Inventario = () => {
             <tbody className="divide-y divide-gray-100 text-sm">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-400 italic">
+                  <td colSpan="9" className="p-8 text-center text-gray-400 italic">
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
@@ -300,6 +301,16 @@ const Inventario = () => {
                       <td className="p-4 text-center font-bold text-base text-gray-900">{p.stock}</td>
                       <td className="p-4 text-xs font-medium text-gray-500">
                         {p.lotes?.filter(l => l.stockActual > 0).length || 0} lote(s)
+                      </td>
+                      <td className="p-4 text-xs font-mono">
+                        {p.vencimiento && p.vencimiento !== '-' ? (
+                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md font-medium inline-flex items-center gap-1">
+                            <i className="fa-regular fa-calendar text-[10px] text-gray-400"></i>
+                            {p.vencimiento}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic">N/A</span>
+                        )}
                       </td>
                       <td className="p-4">
                         <span className={`px-2 py-1 text-[10px] rounded font-bold uppercase ${

@@ -12,14 +12,26 @@ export const AuthProvider = ({ children }) => {
   // Verificar si hay sesión activa al cargar la aplicación
   useEffect(() => {
     const verificarSesion = async () => {
+      // En páginas públicas como /reservar no es necesario verificar sesión
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reservar')) {
+        setCargando(false);
+        return;
+      }
+
+      // Si no hay usuario guardado y estamos en login, evitar 401 innecesario
+      const usuarioGuardado = localStorage.getItem('user');
+      if (!usuarioGuardado && typeof window !== 'undefined' && window.location.pathname === '/login') {
+        setCargando(false);
+        return;
+      }
+
       try {
         const respuesta = await apiClient.get('/auth/me');
         if (respuesta.data && respuesta.data.usuario) {
           setUsuario(respuesta.data.usuario);
         }
       } catch (error) {
-        // Ignorar error si no hay sesión iniciada al arrancar
-        console.log('Sesión no encontrada o expirada.');
+        // Sesión no iniciada o expirada
       } finally {
         setCargando(false);
       }

@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3003/api';
+// Usa ruta relativa '/api' para que pase a través del proxy de Vite
+// Esto garantiza acceso tanto desde localhost como desde cualquier IP/celular en red local
+const API_URL = typeof window !== 'undefined' ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3004/api');
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -15,9 +17,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Si recibimos un 401, limpiamos el localStorage de usuario y forzamos redirección
       localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+      const url = error.config?.url || '';
+      const isAuthCheck = url.includes('/auth/me');
+      const isPublicPage = pathname === '/login' || pathname.startsWith('/reservar');
+
+      if (!isAuthCheck && !isPublicPage) {
         window.location.href = '/login';
       }
     }

@@ -56,7 +56,7 @@ const Dashboard = () => {
 
         <div className="bg-white p-6 rounded-2xl border border-pink-100 shadow-sm flex items-center justify-between transition-all hover:shadow-md">
           <div>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Citas para Hoy</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Citas para Hoy</p>
             <h3 className="text-2xl font-black text-purple-600 mt-1">{data.citasHoy}</h3>
           </div>
           <div className="bg-purple-50 text-purple-500 p-3 rounded-xl text-lg">

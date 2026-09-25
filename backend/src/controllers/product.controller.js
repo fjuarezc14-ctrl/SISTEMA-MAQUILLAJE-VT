@@ -6,6 +6,9 @@ const prisma = new PrismaClient();
 export const obtenerProductos = async (req, res) => {
   try {
     const productos = await prisma.producto.findMany({
+      where: {
+        activo: true,
+      },
       include: {
         lotes: true,
       },
@@ -49,9 +52,35 @@ export const crearProducto = async (req, res) => {
     // Verificar si ya existe el código
     const existe = await prisma.producto.findUnique({
       where: { codigo: codigo.toUpperCase() },
+      include: { lotes: true }
     });
 
     if (existe) {
+      if (!existe.activo) {
+        // Si el producto existía pero fue eliminado lógicamente, lo reactivamos con el nuevo lote
+        const reactivado = await prisma.producto.update({
+          where: { id: existe.id },
+          data: {
+            activo: true,
+            nombre,
+            categoria,
+            precio: parseFloat(precio),
+            vencimiento: vencimiento || null,
+            lotes: {
+              create: {
+                costo: parseFloat(costo),
+                stockInicial: parseInt(stock),
+                stockActual: parseInt(stock),
+              }
+            }
+          },
+          include: { lotes: true }
+        });
+        return res.status(200).json({
+          mensaje: 'Producto reactivado exitosamente.',
+          producto: reactivado
+        });
+      }
       return res.status(400).json({ error: `El código de producto ${codigo} ya existe.` });
     }
 
@@ -133,7 +162,7 @@ export const actualizarProducto = async (req, res) => {
   }
 };
 
-// ── DELETE /api/productos/:id (Eliminar producto) ──
+// ── DELETE /api/productos/:id (Eliminar lógicamente producto) ──
 export const eliminarProducto = async (req, res) => {
   try {
     const { id } = req.params;
@@ -142,15 +171,24 @@ export const eliminarProducto = async (req, res) => {
       return res.status(400).json({ error: 'ID de producto inválido.' });
     }
 
-    // Se eliminarán en cascada los lotes asociados por la configuración de Prisma
-    await prisma.producto.delete({
+    const producto = await prisma.producto.findUnique({
+      where: { id: productoId }
+    });
+
+    if (!producto) {
+      return res.status(404).json({ error: 'Producto no encontrado.' });
+    }
+
+    // Borrado lógico para proteger integridad referencial con ventas y citas
+    await prisma.producto.update({
       where: { id: productoId },
+      data: { activo: false }
     });
 
     res.json({ mensaje: 'Producto eliminado exitosamente.' });
   } catch (error) {
     console.error('Error al eliminar producto:', error);
-    res.status(500).json({ error: 'Error al eliminar el producto. Asegúrese de que no esté asociado a ninguna venta.' });
+    res.status(500).json({ error: 'Error al eliminar el producto.' });
   }
 };
 

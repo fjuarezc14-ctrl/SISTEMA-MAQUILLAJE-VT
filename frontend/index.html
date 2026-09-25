@@ -5,6 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GlowManager Pro - Sistema de Gestión</title>
+    <script>
+      // Polyfill para crypto.randomUUID en contextos HTTP de red local
+      if (typeof window !== 'undefined') {
+        if (!window.crypto) window.crypto = {};
+        if (!window.crypto.randomUUID) {
+          window.crypto.randomUUID = function() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              var r = Math.random() * 16 | 0;
+              var v = c === 'x' ? r : (r & 0x3 | 0x8);
+              return v.toString(16);
+            });
+          };
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

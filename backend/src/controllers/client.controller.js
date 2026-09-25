@@ -5,6 +5,9 @@ const prisma = new PrismaClient();
 // ── GET /api/clientes (Obtener todos los clientes) ──
 export const obtenerClientes = async (req, res) => {
   try {
+    const inicioHoy = new Date();
+    inicioHoy.setHours(0, 0, 0, 0);
+
     const clientes = await prisma.cliente.findMany({
       where: { activo: true },
       include: {
@@ -17,7 +20,7 @@ export const obtenerClientes = async (req, res) => {
           where: {
             estado: 'Pendiente',
             fecha: {
-              gte: new Date()
+              gte: inicioHoy
             }
           },
           orderBy: {
@@ -32,6 +35,38 @@ export const obtenerClientes = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener clientes:', error);
     res.status(500).json({ error: 'Error al obtener los clientes.' });
+  }
+};
+
+// ── GET /api/clientes/buscar/:dni (Buscar cliente individual por DNI) ──
+export const buscarClientePorDni = async (req, res) => {
+  try {
+    const { dni } = req.params;
+    if (!dni) {
+      return res.status(400).json({ error: 'El DNI es obligatorio.' });
+    }
+
+    const cliente = await prisma.cliente.findFirst({
+      where: {
+        dni: dni.trim(),
+        activo: true
+      },
+      include: {
+        historialPuntos: {
+          orderBy: { fecha: 'desc' },
+          take: 5
+        }
+      }
+    });
+
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente no encontrado.' });
+    }
+
+    res.json(cliente);
+  } catch (error) {
+    console.error('Error al buscar cliente por DNI:', error);
+    res.status(500).json({ error: 'Error al consultar el cliente.' });
   }
 };
 

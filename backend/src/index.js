@@ -11,7 +11,7 @@ const PORT = process.env.BACKEND_PORT || 3003;
 
 // ── Middlewares globales ──
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5175',
+  origin: true,
   credentials: true,
 }));
 app.use(express.json());
@@ -21,6 +21,15 @@ app.use(cookieParser());
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'GlowManager Pro', version: '1.0.0' });
 });
+
+import path from 'path';
+
+// ── Servir archivos estáticos (Comprobantes de pago) ──
+app.use('/uploads', express.static(path.resolve('uploads')));
+
+// ── Rutas Públicas (Reservas online por QR sin autenticación) ──
+import publicRoutes from './routes/public.routes.js';
+app.use('/api/public', publicRoutes);
 
 // ── Rutas de Autenticación ──
 import authRoutes from './routes/auth.routes.js';
@@ -36,7 +45,7 @@ app.use('*', (req, res) => {
 });
 
 // ── Inicio del servidor ──
-app.listen(PORT, () => {
-  console.log(`✅ GlowManager Pro API corriendo en http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ GlowManager Pro API corriendo en http://0.0.0.0:${PORT}`);
   console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
 });

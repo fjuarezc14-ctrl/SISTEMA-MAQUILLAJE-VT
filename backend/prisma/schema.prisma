@@ -131,6 +131,9 @@ model Cita {
   estado            String        @default("Pendiente") // "Pendiente" | "Completado" | "Cancelado"
   notas             String?
   precioServicio    Decimal       @default(0) @db.Decimal(10, 2)
+  montoAdelanto     Decimal       @default(20.00) @db.Decimal(10, 2)
+  comprobanteUrl    String?
+  metodoPagoReserva String?
   ingresoRegistrado  Boolean       @default(false)
   insumos           CitaInsumo[]
   venta             Venta?

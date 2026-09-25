@@ -39,8 +39,8 @@ const POS = () => {
   const fetchProductosYStats = async () => {
     try {
       const res = await apiClient.get('/productos');
-      // Filtrar el servicio genérico para que no se muestre en el POS
-      const prodsFiltro = res.data.filter(p => p.codigo !== 'SERV-GENERICO');
+      // Filtrar el servicio genérico y la bolsa de cortesía para que no se muestren en el catálogo de venta directa
+      const prodsFiltro = res.data.filter(p => p.codigo !== 'SERV-GENERICO' && p.codigo !== 'BOLS-001');
       setProductos(prodsFiltro);
       
       const bolsa = res.data.find(p => p.codigo === 'BOLS-001');
@@ -121,14 +121,15 @@ const POS = () => {
   };
 
   const handleBuscarClienteDNI = async () => {
-    if (!clienteDni.trim()) {
+    const dniBuscado = clienteDni.trim();
+    if (!dniBuscado) {
       setDniMessage('Ingrese un DNI');
       setSearchPerformed(false);
       return;
     }
     try {
-      const res = await apiClient.get('/clientes');
-      const found = res.data.find(c => c.dni === clienteDni);
+      const res = await apiClient.get(`/clientes/buscar/${dniBuscado}`);
+      const found = res.data;
       if (found) {
         setClienteNombre(found.nombre);
         setClienteTelefono(found.telefono || '');
@@ -139,7 +140,9 @@ const POS = () => {
         setPuntosCanjeados(0);
         setSearchPerformed(true);
         setDniMessage('¡Cliente encontrado!');
-      } else {
+      }
+    } catch (err) {
+      if (err.response && err.response.status === 404) {
         setClienteNombre('');
         setClienteTelefono('');
         setClienteCorreo('');
@@ -149,10 +152,10 @@ const POS = () => {
         setPuntosCanjeados(0);
         setSearchPerformed(true);
         setDniMessage('Cliente nuevo. Llene los datos para registrarlo.');
+      } else {
+        console.error(err);
+        toast.error('Error al buscar cliente.');
       }
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al buscar cliente.');
     }
   };
 

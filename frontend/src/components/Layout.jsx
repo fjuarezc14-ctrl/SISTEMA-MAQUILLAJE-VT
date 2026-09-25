@@ -60,7 +60,7 @@ const Layout = () => {
               </span>
             </div>
             <button onClick={toggleSidebar} className="md:hidden text-gray-400 hover:text-rose-500">
-              <i class="fa-solid fa-xmark text-2xl"></i>
+              <i className="fa-solid fa-xmark text-2xl"></i>
             </button>
           </div>
           

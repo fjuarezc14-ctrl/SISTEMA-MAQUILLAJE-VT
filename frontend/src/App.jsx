@@ -12,6 +12,7 @@ import Inventario from './pages/Inventario';
 import Gastos from './pages/Gastos';
 import Citas from './pages/Citas';
 import Finanzas from './pages/Finanzas';
+import ReservaPublica from './pages/ReservaPublica';
 
 function App() {
   return (
@@ -19,8 +20,9 @@ function App() {
       <AuthProvider>
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
         <Routes>
-          {/* Ruta pública de Login */}
+          {/* Rutas públicas (Sin acceso a administración) */}
           <Route path="/login" element={<Login />} />
+          <Route path="/reservar" element={<ReservaPublica />} />
 
           {/* Rutas protegidas con Diseño Layout */}
           <Route element={<PrivateRoute />}>

@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import dns from 'dns'
+
+// Asegura que Node resuelva IPv4 primero en contenedores Docker y redes locales
+dns.setDefaultResultOrder('ipv4first')
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -7,10 +11,16 @@ export default defineConfig({
   server: {
     port: 5175,
     host: true, // expone en la red local (necesario para Docker)
+    allowedHosts: true,
     proxy: {
-      // En desarrollo, redirige /api al backend sin CORS
+      // Redirige /api al contenedor del backend
       '/api': {
-        target: 'http://localhost:3003',
+        target: 'http://glowmanager_backend:3004',
+        changeOrigin: true,
+      },
+      // Redirige /uploads para ver comprobantes desde cualquier dispositivo
+      '/uploads': {
+        target: 'http://glowmanager_backend:3004',
         changeOrigin: true,
       },
     },

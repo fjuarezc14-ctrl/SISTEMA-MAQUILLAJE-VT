@@ -32,10 +32,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# ----- DOCKER -----
-# Los volúmenes locales de Docker no van al repo
+# ----- DOCKER Y ARCHIVOS SUBIDOS -----
+# Los volúmenes locales y archivos subidos no van al repo
 docker/volumes/
 postgres_data/
+backend/uploads/
+!backend/uploads/.gitkeep
 
 # ----- EDITORES -----
 .vscode/settings.json

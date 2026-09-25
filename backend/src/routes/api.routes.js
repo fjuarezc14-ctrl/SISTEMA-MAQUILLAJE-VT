@@ -1,5 +1,5 @@
 import express from 'express';
-import { protegerRuta } from '../middleware/auth.middleware.js';
+import { protegerRuta, permitirRoles } from '../middleware/auth.middleware.js';
 import {
   obtenerProductos,
   crearProducto,
@@ -9,6 +9,7 @@ import {
 } from '../controllers/product.controller.js';
 import {
   obtenerClientes,
+  buscarClientePorDni,
   crearCliente,
   actualizarCliente,
   eliminarCliente
@@ -42,14 +43,15 @@ router.use(protegerRuta);
 router.get('/productos', obtenerProductos);
 router.post('/productos', crearProducto);
 router.put('/productos/:id', actualizarProducto);
-router.delete('/productos/:id', eliminarProducto);
+router.delete('/productos/:id', permitirRoles('ADMIN'), eliminarProducto);
 router.post('/productos/:id/lotes', agregarLote);
 
 // ── Rutas de Clientes (CRM) ──
 router.get('/clientes', obtenerClientes);
+router.get('/clientes/buscar/:dni', buscarClientePorDni);
 router.post('/clientes', crearCliente);
 router.put('/clientes/:id', actualizarCliente);
-router.delete('/clientes/:id', eliminarCliente);
+router.delete('/clientes/:id', permitirRoles('ADMIN'), eliminarCliente);
 
 // ── Rutas de Ventas ──
 router.post('/ventas', crearVenta);
@@ -59,7 +61,7 @@ router.get('/ventas/historial', obtenerHistorialVentas);
 router.get('/citas', obtenerCitas);
 router.post('/citas', crearCita);
 router.put('/citas/:id', actualizarCita);
-router.delete('/citas/:id', eliminarCita);
+router.delete('/citas/:id', permitirRoles('ADMIN'), eliminarCita);
 
 // ── Rutas de Gastos Internos ──
 router.get('/gastos', obtenerGastos);
@@ -68,6 +70,6 @@ router.put('/gastos/:id/consumo', registrarConsumo);
 
 // ── Rutas de Reportes e Informes ──
 router.get('/dashboard', obtenerDashboard);
-router.get('/finanzas', obtenerFinanzas);
+router.get('/finanzas', permitirRoles('ADMIN'), obtenerFinanzas);
 
 export default router;

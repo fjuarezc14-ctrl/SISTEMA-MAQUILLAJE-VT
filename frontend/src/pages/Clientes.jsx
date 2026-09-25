@@ -132,6 +132,20 @@ const Clientes = () => {
       toast.error('Este cliente no cuenta con número telefónico registrado para el CRM.');
       return;
     }
+
+    // Sanitizar número: extraer solo dígitos
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    if (!cleanPhone) {
+      toast.error('El número de teléfono no contiene dígitos válidos.');
+      return;
+    }
+    // Si ya empieza con 51 y tiene longitud de 11 dígitos (código 51 + 9 dígitos de celular), no duplicar
+    if (cleanPhone.startsWith('51') && cleanPhone.length === 11) {
+      // ya tiene código de país
+    } else {
+      cleanPhone = `51${cleanPhone}`;
+    }
+
     let mensaje = '';
     if (tipo === 'cita') {
       mensaje = `Hola *${name}*, te saludamos desde *GlowManager Pro* ✨ Queríamos recordarte que tu hermosa cita programada está próxima. ¡Nos estamos preparando para consentirte! 💕`;
@@ -140,7 +154,7 @@ const Clientes = () => {
     } else if (tipo === 'cumple') {
       mensaje = `¡Feliz Cumpleaños, *${name}*! 🎉🥳 Todo el equipo de *GlowManager Pro* te desea un día espectacular lleno de brillo. Recuerda que tienes un obsequio especial y un descuento exclusivo esperando por ti en el estudio. ¡Pasa a celebrar con nosotros! 🎂🎁`;
     }
-    const url = `https://wa.me/51${phone}?text=${encodeURIComponent(mensaje)}`;
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
@@ -439,7 +453,7 @@ const Clientes = () => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Completo</label>
                 <input
                   type="text"
                   required

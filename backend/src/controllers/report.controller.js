@@ -33,8 +33,9 @@ export const obtenerDashboard = async (req, res) => {
       }
     });
 
-    // 3. Stock Crítico (cantidad de productos con stock total <= 5)
+    // 3. Stock Crítico (cantidad de productos activos con stock total <= 5)
     const productos = await prisma.producto.findMany({
+      where: { activo: true },
       include: { lotes: true }
     });
 
@@ -43,8 +44,13 @@ export const obtenerDashboard = async (req, res) => {
     const alertasVencimiento = [];
 
     const hoy = new Date();
-    const limiteAlerta = new Date();
-    limiteAlerta.setDate(hoy.getDate() + 45); // Alertas a 45 días
+    hoy.setHours(0, 0, 0, 0);
+
+    const finHoy = new Date();
+    finHoy.setHours(23, 59, 59, 999);
+
+    const limiteAlerta = new Date(finHoy);
+    limiteAlerta.setDate(limiteAlerta.getDate() + 45); // Alertas a 45 días
 
     productos.forEach(p => {
       const stockTotal = p.lotes.reduce((sum, l) => sum + l.stockActual, 0);
@@ -57,19 +63,18 @@ export const obtenerDashboard = async (req, res) => {
 
       // Alertas de vencimiento
       if (p.vencimiento && p.vencimiento !== '-') {
-        // El formato es "DD/MM/YYYY" o "YYYY-MM-DD".
-        // Intentaremos parsearlo de forma segura.
         let fechaVenc = null;
         if (p.vencimiento.includes('/')) {
           const [dia, mes, anio] = p.vencimiento.split('/');
-          fechaVenc = new Date(`${anio}-${mes}-${dia}T00:00:00`);
+          fechaVenc = new Date(`${anio}-${mes}-${dia}T23:59:59.999`);
         } else {
           fechaVenc = new Date(p.vencimiento);
+          fechaVenc.setHours(23, 59, 59, 999);
         }
 
         if (!isNaN(fechaVenc.getTime())) {
           if (fechaVenc < hoy) {
-            // Vencido
+            // Vencido antes de hoy
             alertasVencimiento.push({
               id: p.id,
               nombre: p.nombre,
@@ -79,16 +84,18 @@ export const obtenerDashboard = async (req, res) => {
               detalle: `¡VENCIDO el ${p.vencimiento}!`
             });
           } else if (fechaVenc <= limiteAlerta) {
-            // Próximo a vencer (dentro de 45 días)
-            const diffTime = Math.abs(fechaVenc - hoy);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // Próximo a vencer (dentro de 45 días o vence hoy)
+            const diffTime = fechaVenc.getTime() - hoy.getTime();
+            const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
             alertasVencimiento.push({
               id: p.id,
               nombre: p.nombre,
               codigo: p.codigo,
               vencimiento: p.vencimiento,
-              tipo: 'PROXIMO',
-              detalle: `Próximo a vencer en ${diffDays} días (${p.vencimiento})`
+              tipo: diffDays === 0 ? 'VENCIDO' : 'PROXIMO',
+              detalle: diffDays === 0 
+                ? `¡Vence HOY (${p.vencimiento})!` 
+                : `Próximo a vencer en ${diffDays} día(s) (${p.vencimiento})`
             });
           }
         }
@@ -136,8 +143,9 @@ export const obtenerFinanzas = async (req, res) => {
     // 5. Ganancia Neta Real
     const gananciaNeta = ingresos - egresos;
 
-    // 6. Capital en inventario (precio de venta * stockActual de cada lote de cada producto)
+    // 6. Capital en inventario (precio de venta * stockActual de cada lote de cada producto activo)
     const productos = await prisma.producto.findMany({
+      where: { activo: true },
       include: { lotes: true }
     });
     let capital = 0;

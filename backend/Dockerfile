@@ -4,13 +4,14 @@ FROM node:22-alpine
 # Instalar dependencias del sistema que Prisma necesita en Alpine
 # openssl: requerido por el schema engine de Prisma
 # libc6-compat: compatibilidad con binarios glibc
-RUN apk add --no-cache openssl libc6-compat
+# tzdata: soporte de zonas horarias (ej. America/Lima)
+RUN apk add --no-cache openssl libc6-compat tzdata
 
 WORKDIR /app
 
 # Copiar dependencias primero (aprovecha caché de Docker)
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copiar código fuente, schema de Prisma y migraciones
 COPY . .
