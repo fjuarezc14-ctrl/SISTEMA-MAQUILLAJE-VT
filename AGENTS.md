@@ -21,5 +21,11 @@ Este proyecto está regido por la **[Constitución de Desarrollo - VT VALETEC](f
 7. **Stack Tecnológico Autorizado**:
    - Frontend: React 19 + Vite + Tailwind CSS.
    - Backend: Node.js + Express + Prisma ORM + PostgreSQL.
-8. **Autorización Previa**:
-   - **Solicitar siempre confirmación explícita del Líder de Programación** antes de ejecutar acciones de alto impacto (como `git push` al repositorio remoto o migraciones destructivas).
+
+## Reglas Estrictas de Operación y Control del Líder:
+1. **No romper la arquitectura del sistema**.
+2. **Usar buenas prácticas de programación fullstack**.
+3. **Detener la ejecución ante cualquier error, duda o sobrepensamiento** y consultar de inmediato al Líder de Programación.
+4. **Siempre esperar y requerir el permiso explícito del Líder** antes de modificar código o ejecutar acciones.
+5. **No subir nada a GitHub** (`git push`) a menos que el Líder lo indique explícitamente.
+6. **No realizar pruebas** a menos que el Líder lo indique expresamente.

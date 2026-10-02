@@ -18,11 +18,11 @@ export const obtenerDashboard = async (req, res) => {
   try {
     const { start, end } = getTodayRange();
 
-    // 1. Ingresos totales (Ventas)
-    const ventas = await prisma.venta.findMany({
-      select: { total: true }
+    // 1. Ingresos totales (Ventas) optimizado con agregación SQL nativa
+    const ventasAggregate = await prisma.venta.aggregate({
+      _sum: { total: true }
     });
-    const ingresos = ventas.reduce((sum, v) => sum + v.total.toNumber(), 0);
+    const ingresos = ventasAggregate._sum.total ? ventasAggregate._sum.total.toNumber() : 0;
 
     // 2. Citas para hoy (conteo y lista detallada de notificaciones)
     const citasDelDia = await prisma.cita.findMany({
@@ -213,20 +213,23 @@ export const obtenerDashboard = async (req, res) => {
 // ── GET /api/finanzas (Métricas de Finanzas y Balance) ──
 export const obtenerFinanzas = async (req, res) => {
   try {
-    const ventas = await prisma.venta.findMany({
-      select: { total: true }
+    // 1. Ingresos totales optimizado con agregación SQL nativa
+    const ventasAggregate = await prisma.venta.aggregate({
+      _sum: { total: true }
     });
-    const ingresos = ventas.reduce((sum, v) => sum + v.total.toNumber(), 0);
+    const ingresos = ventasAggregate._sum.total ? ventasAggregate._sum.total.toNumber() : 0;
 
+    // 2. Costo de ventas (COGS)
     const itemsVendidos = await prisma.itemVenta.findMany({
       select: { cantidad: true, costoUnitario: true }
     });
     const costoVentas = itemsVendidos.reduce((sum, item) => sum + (item.cantidad * item.costoUnitario.toNumber()), 0);
 
-    const gastosInternos = await prisma.gastoInterno.findMany({
-      select: { costoTotal: true }
+    // 3. Gastos internos optimizado con agregación SQL nativa
+    const gastosAggregate = await prisma.gastoInterno.aggregate({
+      _sum: { costoTotal: true }
     });
-    const totalGastos = gastosInternos.reduce((sum, g) => sum + g.costoTotal.toNumber(), 0);
+    const totalGastos = gastosAggregate._sum.costoTotal ? gastosAggregate._sum.costoTotal.toNumber() : 0;
 
     const egresos = costoVentas + totalGastos;
     const gananciaNeta = ingresos - egresos;

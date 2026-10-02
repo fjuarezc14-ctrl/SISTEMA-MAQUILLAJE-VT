@@ -115,6 +115,9 @@ model Venta {
   abonosCredito     AbonoCredito[]
 
   items             ItemVenta[]
+
+  @@index([fecha])
+  @@index([cajaSesionId])
 }
 
 // Líneas del ticket de venta
@@ -154,6 +157,9 @@ model Cita {
   venta             Venta?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+
+  @@index([fecha, estado])
+  @@index([clienteId])
 }
 
 model CitaInsumo {

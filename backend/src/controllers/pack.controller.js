@@ -14,7 +14,10 @@ export const obtenerPacks = async (req, res) => {
       let items = [];
       try {
         items = JSON.parse(p.itemsJson || '[]');
-      } catch (e) {}
+      } catch (err) {
+        console.warn(`[pack.controller] Error al parsear itemsJson para pack ID ${p.id}:`, err.message);
+        items = [];
+      }
       return {
         ...p,
         items
@@ -95,7 +98,10 @@ export const actualizarPack = async (req, res) => {
     let itemsParsed = [];
     try {
       itemsParsed = JSON.parse(actualizado.itemsJson || '[]');
-    } catch (e) {}
+    } catch (err) {
+      console.warn(`[pack.controller] Error al parsear itemsJson para pack actualizado ID ${packId}:`, err.message);
+      itemsParsed = [];
+    }
 
     res.json({
       mensaje: 'Pack promocional actualizado exitosamente.',

@@ -89,8 +89,9 @@ const Citas = () => {
         apiClient.get('/personal')
       ]);
       setServiciosCatalogo(resS.data);
-      setPersonalCatalogo(resP.data);
-    } catch (err) {}
+    } catch (err) {
+      console.warn('[Citas] No se pudo cargar catálogo de servicios o personal adicional:', err.message);
+    }
   };
 
   useEffect(() => {

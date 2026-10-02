@@ -84,7 +84,9 @@ const ReservaPublica = () => {
           notas,
           metodoPagoReserva,
         }));
-      } catch (e) {}
+      } catch (err) {
+        console.warn('[ReservaPublica] Error al guardar borrador en localStorage:', err.message);
+      }
     }
   }, [
     step, servicioSeleccionado, servicioDetalle, fecha, horaSeleccionada,
@@ -109,7 +111,9 @@ const ReservaPublica = () => {
             notas,
             metodoPagoReserva,
           }));
-        } catch (e) {}
+        } catch (err) {
+          console.warn('[ReservaPublica] Error al guardar borrador en visibilidad oculta:', err.message);
+        }
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -288,7 +292,9 @@ const ReservaPublica = () => {
       // Limpiar borrador al confirmar exitosamente
       try {
         localStorage.removeItem(DRAFT_KEY);
-      } catch (e) {}
+      } catch (err) {
+        console.warn('[ReservaPublica] Error al limpiar borrador post-reserva:', err.message);
+      }
 
       setResultadoReserva(res.data);
       setStep(4);
@@ -1057,7 +1063,9 @@ const ReservaPublica = () => {
                 onClick={() => {
                   try {
                     localStorage.removeItem(DRAFT_KEY);
-                  } catch (e) {}
+                  } catch (err) {
+                    console.warn('[ReservaPublica] Error al reiniciar borrador:', err.message);
+                  }
                   setStep(1);
                   setComprobanteFile(null);
                   setPreviewUrl(null);

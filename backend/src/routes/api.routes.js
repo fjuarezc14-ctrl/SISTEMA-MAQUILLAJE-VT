@@ -60,6 +60,10 @@ import {
   actualizarPack,
   eliminarPack
 } from '../controllers/pack.controller.js';
+import { validateBody } from '../middleware/validate.middleware.js';
+import { createProductSchema, addLotSchema } from '../schemas/product.schema.js';
+import { createSaleSchema, registerCreditPaymentSchema } from '../schemas/sale.schema.js';
+import { createAppointmentSchema } from '../schemas/appointment.schema.js';
 
 const router = express.Router();
 
@@ -68,10 +72,10 @@ router.use(protegerRuta);
 
 // ── Rutas de Productos ──
 router.get('/productos', obtenerProductos);
-router.post('/productos', crearProducto);
+router.post('/productos', validateBody(createProductSchema), crearProducto);
 router.put('/productos/:id', actualizarProducto);
 router.delete('/productos/:id', permitirRoles('ADMIN'), eliminarProducto);
-router.post('/productos/:id/lotes', agregarLote);
+router.post('/productos/:id/lotes', validateBody(addLotSchema), agregarLote);
 
 // ── Rutas de Clientes (CRM) ──
 router.get('/clientes', obtenerClientes);
@@ -81,15 +85,15 @@ router.put('/clientes/:id', actualizarCliente);
 router.delete('/clientes/:id', permitirRoles('ADMIN'), eliminarCliente);
 
 // ── Rutas de Ventas, Comprobantes, Créditos y Reportes ──
-router.post('/ventas', crearVenta);
+router.post('/ventas', validateBody(createSaleSchema), crearVenta);
 router.get('/ventas/historial', obtenerHistorialVentas);
 router.get('/ventas/creditos', obtenerCreditosPendientes);
-router.post('/ventas/:id/abonos', registrarAbonoCredito);
+router.post('/ventas/:id/abonos', validateBody(registerCreditPaymentSchema), registrarAbonoCredito);
 router.get('/ventas/reporte-del-dia', reporteVentasDelDia);
 
 // ── Rutas de Citas ──
 router.get('/citas', obtenerCitas);
-router.post('/citas', crearCita);
+router.post('/citas', validateBody(createAppointmentSchema), crearCita);
 router.put('/citas/:id', actualizarCita);
 router.delete('/citas/:id', permitirRoles('ADMIN'), eliminarCita);
 

@@ -35,6 +35,10 @@
 * **Infraestructura**: Docker y Docker Compose.
 * **Prohibición**: No introducir frameworks, librerías o bases de datos adicionales sin autorización expresa del Tech Lead / Líder de Programación.
 
-## 7. Protocolo de Autorización y Buenas Prácticas
-* **Autorización Obligatoria**: La IA deberá esperar y requerir la autorización explícita del líder de programación antes de ejecutar acciones críticas (por ejemplo: ejecutar `git push`, eliminar o truncar bases de datos, ejecutar migraciones destructivas o alterar configuraciones de producción).
-* **Alineación con Requerimientos**: En cada nuevo requerimiento, plan o especificación técnica, la IA leerá y aplicará esta constitución en primer lugar.
+## 7. Reglas Estrictas de Ejecución y Control (Mandatorias)
+1. **No romper la arquitectura del sistema**: Mantener intacto el desacoplamiento de capas, los contratos de API existentes y el flujo de tres capas.
+2. **Usar buenas prácticas de programación fullstack**: Aplicar principios SOLID, modularidad, tipado y código limpio.
+3. **Detención inmediata ante dudas o errores**: Si ocurre un error inesperado, duda de requerimiento o sobrepensamiento, la IA debe detener inmediatamente la ejecución y hacérselo saber al Líder de Programación.
+4. **Requerimiento obligatorio de permiso**: Siempre esperar y requerir el permiso explícito del Líder antes de ejecutar cualquier cambio en los archivos de código o en la configuración.
+5. **Cero publicaciones no autorizadas en GitHub**: No realizar `git push` al repositorio remoto a menos que el Líder lo indique explícitamente.
+6. **No realizar pruebas sin instrucción previa**: No ejecutar tests ni suites de pruebas automatizadas a menos que el Líder lo solicite de forma expresa.

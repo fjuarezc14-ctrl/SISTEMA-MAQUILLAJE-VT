@@ -19,8 +19,13 @@ export const protegerRuta = async (req, res, next) => {
       return res.status(401).json({ error: 'No autorizado. Token no proporcionado.' });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error('[auth.middleware] CRÍTICO: JWT_SECRET no configurado en variables de entorno.');
+      return res.status(500).json({ error: 'Error interno de configuración del servidor.' });
+    }
+
     // 2. Verificar token
-    const descodificado = jwt.verify(token, process.env.JWT_SECRET || 'cambia_esto_por_una_clave_secreta_muy_larga_y_segura');
+    const descodificado = jwt.verify(token, process.env.JWT_SECRET);
 
     // 3. Buscar usuario en base de datos
     const usuario = await prisma.usuario.findUnique({

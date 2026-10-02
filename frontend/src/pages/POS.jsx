@@ -8,7 +8,6 @@ const POS = () => {
   const [servicios, setServicios] = useState([]);
   const [packs, setPacks] = useState([]);
   const [cart, setCart] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   // Modals
@@ -39,17 +38,11 @@ const POS = () => {
   const [montoDigital, setMontoDigital] = useState('');
 
   const [statusBolsa, setStatusBolsa] = useState(false);
-  const [bolsaStock, setBolsaStock] = useState(0);
   const [dniMessage, setDniMessage] = useState('');
   const [clienteExiste, setClienteExiste] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [clientePuntos, setClientePuntos] = useState(0);
   const [puntosCanjeados, setPuntosCanjeados] = useState(0);
-
-  // Autocomplete and CRM list state in POS
-  const [clientes, setClientes] = useState([]);
-  const [clientSearchQuery, setClientSearchQuery] = useState('');
-  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
   // Sales History states
   const [history, setHistory] = useState([]);
@@ -60,11 +53,6 @@ const POS = () => {
       const res = await apiClient.get('/productos');
       const prodsFiltro = res.data.filter(p => p.codigo !== 'SERV-GENERICO' && p.codigo !== 'BOLS-001');
       setProductos(prodsFiltro);
-      
-      const bolsa = res.data.find(p => p.codigo === 'BOLS-001');
-      if (bolsa) {
-        setBolsaStock(bolsa.stock);
-      }
     } catch (err) {
       console.error('Error al obtener productos:', err);
     }
@@ -88,15 +76,6 @@ const POS = () => {
     }
   };
 
-  const fetchClientes = async () => {
-    try {
-      const res = await apiClient.get('/clientes');
-      setClientes(res.data);
-    } catch (err) {
-      console.error('Error al obtener clientes:', err);
-    }
-  };
-
   const fetchCajaEstado = async () => {
     try {
       const res = await apiClient.get('/caja/estado');
@@ -108,13 +87,10 @@ const POS = () => {
 
   useEffect(() => {
     const init = async () => {
-      setLoading(true);
       await fetchProductosYStats();
       await fetchServicios();
       await fetchPacks();
-      await fetchClientes();
       await fetchCajaEstado();
-      setLoading(false);
     };
     init();
   }, []);
@@ -206,9 +182,6 @@ const POS = () => {
     setSearchPerformed(false);
     setClientePuntos(0);
     setPuntosCanjeados(0);
-    setClientSearchQuery('');
-    setMostrarSugerencias(false);
-    fetchClientes();
     setShowCheckoutModal(true);
   };
 
@@ -306,7 +279,6 @@ const POS = () => {
       setCart([]);
       setShowCheckoutModal(false);
       fetchProductosYStats();
-      fetchClientes();
       fetchCajaEstado();
     } catch (err) {
       console.error('Error al realizar checkout:', err);

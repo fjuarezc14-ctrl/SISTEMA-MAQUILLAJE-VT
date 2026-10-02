@@ -34,8 +34,7 @@ const Login = () => {
         <div className="text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-500 text-white shadow-md shadow-pink-200">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21bc-.115.795-.935 1.298-1.688.948L4.318 20.35a1.125 1.125 0 01-.527-.852l-.462-3.18a1.875 1.875 0 011.082-2.022l1.688-.844a1.875 1.875 0 012.38 1.083l.267.801m1.072-3.273l.267-.801a1.875 1.875 0 012.38-1.083l1.688.844a1.875 1.875 0 011.082 2.022l-.462 3.18a1.125 1.125 0 01-.527.852L16.5 21.948c-.753.35-1.573-.153-1.688-.948l-.813-5.044m1.072-3.273L15 13.5m-3-4.5c.08.337.025.702-.158 1.002L10.5 12h3l-.342-1.498a1.125 1.125 0 00-.158-1.002L12 9.002m0 0l-.342-1.498a1.125 1.125 0 00-.158-1.002L12 6.502" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>
           </div>
           <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-gray-900">
