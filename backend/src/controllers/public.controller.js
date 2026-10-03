@@ -168,6 +168,10 @@ export const crearReservaPublica = async (req, res) => {
       return res.status(400).json({ error: 'Fecha u hora inválida.' });
     }
 
+    if (targetDate <= new Date()) {
+      return res.status(400).json({ error: 'No es posible agendar reservas en fechas u horas pasadas.' });
+    }
+
     if (targetDate.getDay() === 0) {
       return res.status(400).json({ error: 'Los domingos no hay atención disponible.' });
     }

@@ -211,8 +211,8 @@ export const cerrarCaja = async (req, res) => {
     const totalGastosEfectivo = gastos.reduce((sum, g) => sum + (parseFloat(g.costoTotal) || 0), 0);
 
     const montoApertura = parseFloat(sesionActiva.montoApertura) || 0;
-    const saldoEfectivoEsperado = montoApertura + totalVentasEfectivo + totalAbonosEfectivo - totalGastosEfectivo;
-    const diferencia = efectivoFisico - saldoEfectivoEsperado;
+    const saldoEfectivoEsperado = Math.round((montoApertura + totalVentasEfectivo + totalAbonosEfectivo - totalGastosEfectivo) * 100) / 100;
+    const diferencia = Math.round((efectivoFisico - saldoEfectivoEsperado) * 100) / 100;
 
     // Vincular todas las ventas de la sesión que no tenían id
     await prisma.venta.updateMany({

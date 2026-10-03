@@ -624,8 +624,8 @@ const Clientes = () => {
                   required
                   maxLength={8}
                   value={dni}
-                  onChange={(e) => setDni(e.target.value)}
-                  placeholder="8 dígitos"
+                  onChange={(e) => setDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="8 dígitos numéricos"
                   className="w-full px-3 py-1.5 rounded-xl border border-gray-200 font-mono"
                 />
               </div>
@@ -646,8 +646,9 @@ const Clientes = () => {
                 <label className="block font-bold text-gray-600 uppercase mb-0.5">Teléfono / WhatsApp</label>
                 <input
                   type="tel"
+                  maxLength={9}
                   value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
+                  onChange={(e) => setTelefono(e.target.value.replace(/\D/g, '').slice(0, 9))}
                   placeholder="987654321"
                   className="w-full px-3 py-1.5 rounded-xl border border-gray-200"
                 />

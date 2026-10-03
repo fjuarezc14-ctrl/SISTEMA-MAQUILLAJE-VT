@@ -670,7 +670,7 @@ const POS = () => {
                         type="text"
                         maxLength={8}
                         value={clienteDni}
-                        onChange={(e) => setClienteDni(e.target.value)}
+                        onChange={(e) => setClienteDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
                         placeholder="8 dígitos"
                         className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs bg-white font-mono"
                       />

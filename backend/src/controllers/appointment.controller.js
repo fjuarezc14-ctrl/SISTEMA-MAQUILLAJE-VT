@@ -39,7 +39,7 @@ export const obtenerCitas = async (req, res) => {
 // ── POST /api/citas (Crear una cita) ──
 export const crearCita = async (req, res) => {
   try {
-    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos, puntosCanjeados = 0 } = req.body;
+    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos, puntosCanjeados = 0, personalId } = req.body;
 
     if (!fecha || !hora || !clienteNombre || !servicio) {
       return res.status(400).json({ error: 'Fecha, hora, cliente y servicio son obligatorios.' });
@@ -47,6 +47,22 @@ export const crearCita = async (req, res) => {
 
     // Unimos fecha y hora en un solo objeto Date
     const fechaHora = new Date(`${fecha}T${hora}:00`);
+
+    if (personalId) {
+      const pId = parseInt(personalId);
+      if (!isNaN(pId)) {
+        const conflicto = await prisma.cita.findFirst({
+          where: {
+            personalId: pId,
+            fecha: fechaHora,
+            estado: { notIn: ['Cancelado', 'Anulado'] }
+          }
+        });
+        if (conflicto) {
+          return res.status(409).json({ error: 'La colaboradora seleccionada ya tiene una cita agendada en ese mismo horario.' });
+        }
+      }
+    }
 
     let finalCita = null;
 
@@ -110,7 +126,8 @@ export const crearCita = async (req, res) => {
             estado: 'Completado',
             notas: notas || null,
             precioServicio: priceServ,
-            ingresoRegistrado: true
+            ingresoRegistrado: true,
+            personalId: personalId ? parseInt(personalId) : null
           }
         });
 
@@ -254,7 +271,8 @@ export const crearCita = async (req, res) => {
           clienteId: dbCliente ? dbCliente.id : null,
           servicio,
           estado: estado || 'Pendiente',
-          notas: notas || null
+          notas: notas || null,
+          personalId: personalId ? parseInt(personalId) : null
         }
       });
     }
@@ -277,7 +295,7 @@ export const crearCita = async (req, res) => {
 export const actualizarCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos, puntosCanjeados = 0 } = req.body;
+    const { fecha, hora, clienteNombre, servicio, estado, notas, precioServicio, metodoPago, insumos, puntosCanjeados = 0, personalId } = req.body;
 
     const citaId = parseInt(id);
     if (isNaN(citaId)) {
@@ -290,6 +308,34 @@ export const actualizarCita = async (req, res) => {
 
     if (!citaExistente) {
       return res.status(404).json({ error: 'Cita no encontrada.' });
+    }
+
+    // Validar conflicto de agenda para la colaboradora si se actualiza personal o fecha/hora
+    if (personalId !== undefined || fecha !== undefined || hora !== undefined) {
+      const targetPersonalId = personalId !== undefined ? (personalId ? parseInt(personalId) : null) : citaExistente.personalId;
+      let targetFecha = citaExistente.fecha;
+      if (fecha && hora) {
+        targetFecha = new Date(`${fecha}T${hora}:00`);
+      } else if (fecha) {
+        const localDate = new Date(citaExistente.fecha);
+        const hh = String(localDate.getHours()).padStart(2, '0');
+        const min = String(localDate.getMinutes()).padStart(2, '0');
+        targetFecha = new Date(`${fecha}T${hh}:${min}:00`);
+      }
+
+      if (targetPersonalId && (!estado || (estado !== 'Cancelado' && estado !== 'Anulado'))) {
+        const conflicto = await prisma.cita.findFirst({
+          where: {
+            id: { not: citaId },
+            personalId: targetPersonalId,
+            fecha: targetFecha,
+            estado: { notIn: ['Cancelado', 'Anulado'] }
+          }
+        });
+        if (conflicto) {
+          return res.status(409).json({ error: 'La colaboradora seleccionada ya tiene una cita agendada en ese mismo horario.' });
+        }
+      }
     }
 
     let isTransitioningToCompleted = false;
@@ -507,7 +553,8 @@ export const actualizarCita = async (req, res) => {
             estado: 'Completado',
             precioServicio: priceServ,
             ingresoRegistrado: true,
-            ...(notas !== undefined && { notas: notas || null })
+            ...(notas !== undefined && { notas: notas || null }),
+            ...(personalId !== undefined && { personalId: personalId ? parseInt(personalId) : null })
           }
         });
       });
@@ -624,7 +671,8 @@ export const actualizarCita = async (req, res) => {
           ...(clienteId !== undefined && { clienteId }),
           ...(servicio && { servicio }),
           ...(estado && { estado }),
-          ...(notas !== undefined && { notas: notas || null })
+          ...(notas !== undefined && { notas: notas || null }),
+          ...(personalId !== undefined && { personalId: personalId ? parseInt(personalId) : null })
         }
       });
     }

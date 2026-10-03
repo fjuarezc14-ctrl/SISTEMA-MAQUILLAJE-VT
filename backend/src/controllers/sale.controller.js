@@ -230,6 +230,10 @@ export const crearVenta = async (req, res) => {
         if (metodoPago === 'Pago Mixto') {
           finalMontoEfectivo = parseFloat(montoEfectivo) || 0;
           finalMontoDigital = parseFloat(montoDigital) || 0;
+          const sumaMixta = finalMontoEfectivo + finalMontoDigital;
+          if (Math.abs(sumaMixta - totalNetoPagarFinal) > 0.05) {
+            throw new Error(`En Pago Mixto, la suma de efectivo (S/ ${finalMontoEfectivo.toFixed(2)}) y digital (S/ ${finalMontoDigital.toFixed(2)}) debe coincidir con el total a pagar (S/ ${totalNetoPagarFinal.toFixed(2)}).`);
+          }
         } else if (metodoPago === 'Efectivo') {
           finalMontoEfectivo = totalNetoPagarFinal;
           finalMontoDigital = 0;

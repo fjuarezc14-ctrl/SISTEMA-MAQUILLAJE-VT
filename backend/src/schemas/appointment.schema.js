@@ -24,3 +24,21 @@ export const createAppointmentSchema = z.object({
     cantidad: z.number().int().positive()
   })).optional()
 });
+
+export const updateAppointmentSchema = z.object({
+  fecha: z.string().optional(),
+  hora: z.string().optional(),
+  clienteNombre: z.string().trim().min(1).optional(),
+  servicio: z.string().trim().min(1).optional(),
+  estado: z.enum(['Pendiente', 'Confirmado', 'Completado', 'Cancelado', 'Anulado']).optional(),
+  notas: z.string().trim().optional().nullable(),
+  precioServicio: z.coerce.number().min(0).optional(),
+  metodoPago: z.string().optional().nullable(),
+  insumos: z.array(z.object({
+    productoId: z.coerce.number().int(),
+    cantidad: z.coerce.number().int().positive()
+  })).optional(),
+  puntosCanjeados: z.coerce.number().int().min(0).optional(),
+  personalId: z.coerce.number().int().optional().nullable()
+});
+

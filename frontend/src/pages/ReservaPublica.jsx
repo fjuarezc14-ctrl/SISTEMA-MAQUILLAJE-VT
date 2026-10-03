@@ -757,7 +757,7 @@ const ReservaPublica = () => {
                       required
                       maxLength={8}
                       value={clienteDni}
-                      onChange={(e) => setClienteDni(e.target.value)}
+                      onChange={(e) => setClienteDni(e.target.value.replace(/\D/g, '').slice(0, 8))}
                       placeholder="8 dígitos"
                       className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-pink-400 bg-gray-50/40"
                     />
@@ -767,10 +767,11 @@ const ReservaPublica = () => {
                     <label className="block text-[11px] sm:text-xs font-bold text-gray-600 uppercase mb-1">WhatsApp / Celular *</label>
                     <input
                       type="tel"
-                      inputMode="tel"
+                      inputMode="numeric"
                       required
+                      maxLength={9}
                       value={clienteTelefono}
-                      onChange={(e) => setClienteTelefono(e.target.value)}
+                      onChange={(e) => setClienteTelefono(e.target.value.replace(/\D/g, '').slice(0, 9))}
                       placeholder="Ej. 987654321"
                       className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-pink-400 bg-gray-50/40"
                     />

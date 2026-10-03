@@ -41,3 +41,12 @@ export const addLotSchema = z.object({
     .int('La cantidad debe ser un número entero.')
     .positive('La cantidad a ingresar debe ser mayor a 0.')
 });
+
+export const updateProductSchema = z.object({
+  codigo: z.string().trim().min(1, 'El código no puede estar vacío.').optional(),
+  nombre: z.string().trim().min(1, 'El nombre no puede estar vacío.').optional(),
+  categoria: z.string().trim().min(1, 'La categoría no puede estar vacía.').optional(),
+  precio: z.coerce.number().positive('El precio debe ser mayor a 0.').optional(),
+  vencimiento: z.string().trim().optional().nullable()
+});
+
